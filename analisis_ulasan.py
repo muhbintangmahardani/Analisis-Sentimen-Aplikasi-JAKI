@@ -257,7 +257,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # =====================================================================
-# 3. FUNGSI INISIALISASI SASTRAWI & NLTK
+# 3. FUNGSI INISIALISASI SASTRAWI & NLTK (SUDAH DIPERBAIKI)
 # =====================================================================
 @st.cache_resource
 def load_text_processor():
@@ -288,7 +288,7 @@ def load_text_processor():
     ]
     stopwords_list.extend(kata_tambahan)
 
-    return stemmer_obj, list_stopwords
+    return stemmer_obj, set(stopwords_list)
 
 stemmer, list_stopwords = load_text_processor()
 
@@ -400,7 +400,7 @@ def validasi_khusus_jaki(df):
             "yang menyebut entitas JAKI; minimal wajib **5%**)."
         )
 
-    # GEMBOK 4: Konteks Layanan Publik DKI Jakarta & Irisan Kamus TF-IDF JAKI
+    # GEMBOK 4: Konteks Layanan Publik DKI Jakarta
     konteks_dki = [
         r'\bjaki\b', r'\bjakarta\b', r'\bdki\b', r'\bpemprov\b', r'\bgubernur\b',
         r'\blapor\b', r'\blaporan\b', r'\bwarga\b', r'\bkelurahan\b', r'\bkecamatan\b',
