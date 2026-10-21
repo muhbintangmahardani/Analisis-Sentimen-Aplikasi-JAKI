@@ -25,55 +25,55 @@ st.set_page_config(
 )
 
 def load_local_webp_logo():
-    """
-    Mencari file logo .webp di repositori GitHub secara otomatis
-    dan mengubahnya ke Base64 agar bisa dipasang di dalam Navbar HTML.
-    """
-    kandidat_nama = ['logo_jaki.webp', 'jaki.webp', 'logo.webp']
+    kandidat_nama = ['logo_jaki.webp', 'jaki.webp', 'logo.webp', 'logo_jaki.png']
     for nama_file in kandidat_nama:
         if os.path.exists(nama_file):
             with open(nama_file, "rb") as f:
                 encoded = base64.b64encode(f.read()).decode("utf-8")
-                return f"data:image/webp;base64,{encoded}"
-    # Cari file .webp apa pun yang ada di folder utama jika namanya berbeda
+                mime = "image/png" if nama_file.endswith(".png") else "image/webp"
+                return f"data:{mime};base64,{encoded}"
     for file in os.listdir('.'):
-        if file.lower().endswith('.webp'):
+        if file.lower().endswith(('.webp', '.png')):
             with open(file, "rb") as f:
                 encoded = base64.b64encode(f.read()).decode("utf-8")
-                return f"data:image/webp;base64,{encoded}"
+                mime = "image/png" if file.lower().endswith(".png") else "image/webp"
+                return f"data:{mime};base64,{encoded}"
     return None
 
 logo_base64 = load_local_webp_logo()
 
 # =====================================================================
-# 2. CSS KUSTOM: GAYA LANDING PAGE MUSAVISION (TEMA BIRU & FONT BARU)
+# 2. CSS KUSTOM: FLOATING NAVBAR PERSIS MUSAVISION + DOT GRID BACKGROUND
 # =====================================================================
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Newsreader:ital,opsz,wght@1,6..72,500;1,6..72,600&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
 
-    html, body, [class*="css"] {
+    /* Latar Belakang Dot-Matrix Halus persis MusaVision */
+    .stApp {
         font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif !important;
         background-color: #F8FAFC;
+        background-image: radial-gradient(#CBD5E1 1px, transparent 1px);
+        background-size: 22px 22px;
         color: #0F172A;
     }
 
     header[data-testid="stHeader"] {
         background: transparent !important;
-        height: 1.2rem !important;
+        height: 0rem !important;
     }
     .block-container {
-        padding-top: 1.5rem !important;
-        padding-bottom: 3rem !important;
-        max-width: 1220px !important;
+        padding-top: 0.8rem !important;
+        padding-bottom: 3.5rem !important;
+        max-width: 1240px !important;
     }
 
-    /* 1. TOP STATUS BAR (Dark Navy Bar ala MusaVision) */
+    /* 1. TOP DARK STATUS BAR (Satu Baris Ramping ala MusaVision) */
     .mv-topbar {
-        background-color: #071126;
+        background-color: #070E1E;
         color: #94A3B8;
-        padding: 8px 20px;
-        border-radius: 8px 8px 0 0;
+        padding: 8px 22px;
+        border-radius: 10px 10px 0 0;
         display: flex;
         flex-wrap: wrap;
         justify-content: space-between;
@@ -81,74 +81,130 @@ st.markdown("""
         font-size: 0.72rem;
         border-bottom: 1px solid #1E293B;
     }
-    .mv-badge-online {
+    .mv-topbar-left {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .mv-badge-research {
         display: inline-flex;
         align-items: center;
         gap: 6px;
-        background-color: rgba(37, 99, 235, 0.22);
+        background-color: rgba(37, 99, 235, 0.2);
         color: #60A5FA;
         border: 1px solid rgba(96, 165, 250, 0.35);
-        padding: 2px 9px;
+        padding: 2px 10px;
         border-radius: 99px;
         font-family: 'JetBrains Mono', monospace;
         font-size: 0.66rem;
         font-weight: 600;
-        margin-right: 10px;
+    }
+    .mv-topbar-right {
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.7rem;
+        color: #94A3B8;
+        display: flex;
+        align-items: center;
+        gap: 10px;
     }
 
-    /* 2. HEADER BRAND BAR (Menyatu di bawah Topbar seperti MusaVision) */
-    .mv-header-bar {
-        background-color: #FFFFFF;
+    /* 2. FLOATING NAVBAR CONTAINER (Mengubah st.columns menjadi 1 Baris Navbar Utuh) */
+    div[data-testid="stHorizontalBlock"]:has(#mv-nav-brand) {
+        background-color: rgba(255, 255, 255, 0.96);
+        backdrop-filter: blur(10px);
         border: 1px solid #E2E8F0;
         border-top: none;
         border-radius: 0 0 12px 12px;
-        padding: 14px 22px;
-        margin-bottom: 14px;
-        display: flex;
-        flex-wrap: wrap;
-        justify-content: space-between;
-        align-items: center;
-        gap: 12px;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+        padding: 10px 20px !important;
+        margin-top: -1rem !important;
+        margin-bottom: 24px !important;
+        align-items: center !important;
+        box-shadow: 0 8px 20px -6px rgba(15, 23, 42, 0.06);
     }
-    .mv-brand-wrap {
+
+    /* Brand Kiri di dalam Navbar */
+    #mv-nav-brand {
         display: flex;
         align-items: center;
-        gap: 12px;
+        gap: 10px;
+    }
+    .mv-logo-box {
+        height: 32px;
+        width: 32px;
+        border-radius: 8px;
+        background-color: #0B1F47;
+        color: #FFFFFF;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 800;
+        font-size: 0.72rem;
+        letter-spacing: 0.03em;
+        flex-shrink: 0;
     }
     .mv-logo-img {
         height: 32px;
         width: auto;
-        border-radius: 6px;
+        border-radius: 8px;
         object-fit: contain;
     }
-    .mv-logo-fallback {
-        background-color: #0B1F47;
-        color: #FFFFFF;
+    .mv-brand-name {
         font-weight: 800;
-        font-size: 0.85rem;
-        padding: 6px 10px;
-        border-radius: 6px;
-        letter-spacing: 0.04em;
+        font-size: 1.05rem;
+        color: #0F172A;
+        letter-spacing: -0.02em;
     }
-    .mv-ver-tag {
+    .mv-brand-ver {
         font-family: 'JetBrains Mono', monospace;
-        font-size: 0.65rem;
+        font-size: 0.64rem;
         font-weight: 600;
-        color: #1D4ED8;
-        background-color: #EFF6FF;
-        border: 1px solid #BFDBFE;
+        color: #475569;
+        background-color: #F1F5F9;
+        border: 1px solid #E2E8F0;
         padding: 2px 7px;
-        border-radius: 4px;
+        border-radius: 5px;
     }
 
-    /* 3. HERO LANDING SECTION (2-Column Editorial Style) */
+    /* Styling Tombol di dalam Navbar agar persis MusaVision (Ghost Links vs Pill Aktif) */
+    div[data-testid="stHorizontalBlock"]:has(#mv-nav-brand) div.stButton > button[kind="secondary"] {
+        background-color: transparent !important;
+        color: #475569 !important;
+        border: 1px solid transparent !important;
+        border-radius: 8px !important;
+        font-weight: 600 !important;
+        font-size: 0.8rem !important;
+        padding: 0.42rem 0.75rem !important;
+        box-shadow: none !important;
+    }
+    div[data-testid="stHorizontalBlock"]:has(#mv-nav-brand) div.stButton > button[kind="secondary"]:hover {
+        color: #0F172A !important;
+        background-color: #F1F5F9 !important;
+    }
+    div[data-testid="stHorizontalBlock"]:has(#mv-nav-brand) div.stButton > button[kind="primary"] {
+        background-color: #0B1736 !important;
+        color: #FFFFFF !important;
+        border: 1px solid #0B1736 !important;
+        border-radius: 8px !important;
+        font-weight: 600 !important;
+        font-size: 0.8rem !important;
+        padding: 0.42rem 0.9rem !important;
+        box-shadow: 0 2px 6px rgba(11, 23, 54, 0.15) !important;
+    }
+    div[data-testid="stHorizontalBlock"]:has(#mv-nav-brand) div.stButton > button[kind="primary"]:hover {
+        background-color: #1D4ED8 !important;
+        border-color: #1D4ED8 !important;
+    }
+
+    /* 3. HERO LANDING SECTION */
     .mv-hero-box {
         background-color: #FFFFFF;
         border: 1px solid #E2E8F0;
         border-radius: 14px;
-        padding: 32px;
-        height: 100%;
+        padding: 30px;
+        box-shadow: 0 2px 8px rgba(15, 23, 42, 0.02);
     }
     .mv-domain-pill {
         display: inline-flex;
@@ -163,13 +219,13 @@ st.markdown("""
         border-radius: 99px;
         letter-spacing: 0.05em;
         text-transform: uppercase;
-        margin-bottom: 16px;
+        margin-bottom: 14px;
     }
     .mv-main-title {
-        font-size: 2.35rem;
+        font-size: 2.25rem;
         font-weight: 800;
         color: #0F172A;
-        line-height: 1.15;
+        line-height: 1.16;
         letter-spacing: -0.025em;
         margin-bottom: 14px;
     }
@@ -180,14 +236,14 @@ st.markdown("""
         color: #1D4ED8;
     }
     .mv-hero-lead {
-        font-size: 0.92rem;
+        font-size: 0.9rem;
         color: #475569;
         line-height: 1.65;
-        margin-bottom: 22px;
+        margin-bottom: 20px;
     }
     .mv-inline-code {
         font-family: 'JetBrains Mono', monospace;
-        font-size: 0.78rem;
+        font-size: 0.76rem;
         font-weight: 600;
         background-color: #F1F5F9;
         color: #0F172A;
@@ -201,8 +257,8 @@ st.markdown("""
         display: grid;
         grid-template-columns: repeat(4, 1fr);
         gap: 10px;
-        margin-top: 22px;
-        padding-top: 22px;
+        margin-top: 18px;
+        padding-top: 18px;
         border-top: 1px solid #F1F5F9;
     }
     .mv-metric-item {
@@ -213,17 +269,15 @@ st.markdown("""
     }
     .mv-metric-num {
         font-family: 'JetBrains Mono', monospace;
-        font-size: 1.25rem;
+        font-size: 1.2rem;
         font-weight: 700;
         color: #0F172A;
     }
-    .mv-metric-num.blue {
-        color: #1D4ED8;
-    }
+    .mv-metric-num.blue { color: #1D4ED8; }
     .mv-metric-label {
         font-size: 0.68rem;
         color: #64748B;
-        margin-top: 3px;
+        margin-top: 2px;
         font-weight: 500;
     }
 
@@ -233,14 +287,14 @@ st.markdown("""
         border: 1px solid #E2E8F0;
         border-radius: 14px;
         padding: 20px;
-        height: 100%;
+        box-shadow: 0 2px 8px rgba(15, 23, 42, 0.02);
     }
     .mv-preview-bar {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        padding-bottom: 12px;
-        margin-bottom: 14px;
+        padding-bottom: 10px;
+        margin-bottom: 12px;
         border-bottom: 1px solid #F1F5F9;
         font-size: 0.74rem;
         font-weight: 700;
@@ -286,7 +340,7 @@ st.markdown("""
         line-height: 1.5;
     }
 
-    /* CARDS (Pipeline, Taksonomi, Spesifikasi) */
+    /* CARDS (Pipeline & Spesifikasi) */
     .mv-card {
         background-color: #FFFFFF;
         border: 1px solid #E2E8F0;
@@ -338,14 +392,14 @@ st.markdown("""
         border: 1px solid #E2E8F0;
         border-radius: 12px;
         padding: 18px 20px;
-        margin-bottom: 14px;
+        margin-bottom: 12px;
     }
     .mv-studio-top {
         display: flex;
         justify-content: space-between;
         align-items: center;
         padding-bottom: 10px;
-        margin-bottom: 12px;
+        margin-bottom: 6px;
         border-bottom: 1px solid #F1F5F9;
     }
     .mv-step-num {
@@ -366,7 +420,7 @@ st.markdown("""
         color: #64748B;
     }
 
-    /* RESULT BOXES */
+    /* RESULT BOXES & BEDAH TOKEN */
     .mv-res-pos {
         background-color: #F0FDF4;
         border: 1px solid #BBF7D0;
@@ -385,8 +439,38 @@ st.markdown("""
         color: #7F1D1D;
         margin-bottom: 12px;
     }
+    .bedah-card {
+        background-color: #FFFFFF;
+        border: 1px solid #E2E8F0;
+        border-radius: 12px;
+        padding: 16px 18px;
+        margin-top: 12px;
+    }
+    .token-pill {
+        display: inline-block;
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.73rem;
+        font-weight: 600;
+        background-color: #EFF6FF;
+        color: #1D4ED8;
+        border: 1px solid #BFDBFE;
+        padding: 3px 9px;
+        border-radius: 6px;
+        margin: 3px 4px 3px 0;
+    }
+    .change-pill {
+        display: inline-block;
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.71rem;
+        background-color: #FFFBEB;
+        color: #B45309;
+        border: 1px solid #FDE68A;
+        padding: 2px 8px;
+        border-radius: 6px;
+        margin: 2px 4px 2px 0;
+    }
 
-    /* BUTTONS */
+    /* GENERAL BUTTONS OUTSIDE NAVBAR */
     div.stButton > button[kind="primary"] {
         background-color: #071126 !important;
         color: #FFFFFF !important;
@@ -535,6 +619,42 @@ def pembersihan_teks(text):
 
     return " ".join(kata_bersih)
 
+def bedah_perubahan_teks(text):
+    """
+    Membedah rincian perubahan kata demi kata (Normalisasi, Stopword, Stemming Sastrawi)
+    beserta perhitungan jumlah token yang masuk ke SVM.
+    """
+    teks_awal = str(text).lower()
+    teks_awal = re.sub(r'([a-zA-Z])\1+', r'\1', teks_awal)
+    teks_awal = re.sub(r'http\S+|@[a-zA-Z0-9_]+|#\w+|\d+', '', teks_awal)
+    teks_awal = re.sub(r'[^\w\s]', ' ', teks_awal)
+    teks_awal = re.sub(r'\s+', ' ', teks_awal).strip()
+
+    token_awal = teks_awal.split()
+    token_masuk_svm = []
+    perubahan_kata = []
+    terbuang_stopwords = []
+
+    for kata_asli in token_awal:
+        kata_norm = kamus_normalisasi.get(kata_asli, kata_asli)
+        if kata_norm in list_stopwords:
+            terbuang_stopwords.append(kata_asli)
+        else:
+            kata_dasar = stemmer.stem(kata_norm)
+            if kata_dasar != '':
+                token_masuk_svm.append(kata_dasar)
+                if kata_asli != kata_dasar:
+                    perubahan_kata.append(f"{kata_asli} → {kata_dasar}")
+
+    return {
+        "jml_awal": len(token_awal),
+        "jml_akhir": len(token_masuk_svm),
+        "token_svm": token_masuk_svm,
+        "teks_bersih": " ".join(token_masuk_svm),
+        "perubahan": perubahan_kata,
+        "stopwords_terbuang": terbuang_stopwords
+    }
+
 @st.cache_resource
 def load_models():
     model = joblib.load('model_svm_jaki.pkl')
@@ -543,7 +663,7 @@ def load_models():
 
 try:
     svm_model, tfidf_vect = load_models()
-    jml_vocab = len(tfidf_vect.vocabulary_) if hasattr(tfidf_vect, 'vocabulary_') else 2500
+    jml_vocab = len(tfidf_vect.vocabulary_) if hasattr(tfidf_vect, 'vocabulary_') else 4075
 except Exception:
     st.error("Gagal memuat file .pkl. Pastikan model_svm_jaki.pkl dan tfidf_jaki.pkl berada di direktori yang sama.")
     st.stop()
@@ -562,67 +682,62 @@ def navigasi_ke(nama_halaman):
     st.session_state.halaman_aktif = nama_halaman
 
 # =====================================================================
-# 5. TOPBAR & NAVBAR UTAMA (DENGAN LOGO .WEBP DARI GITHUB)
+# 5. TOP DARK STATUS BAR + FLOATING NAVBAR MENYATU ALA MUSAVISION
 # =====================================================================
 if logo_base64:
     elemen_logo = f'<img src="{logo_base64}" class="mv-logo-img" alt="Logo JAKI">'
 else:
-    elemen_logo = '<div class="mv-logo-fallback">JAKI</div>'
+    elemen_logo = '<div class="mv-logo-box">JAKI</div>'
 
+# Top Status Bar
 st.markdown(f"""
     <div class="mv-topbar">
-        <div>
-            <span class="mv-badge-online">● SVM MODEL SIAP</span>
+        <div class="mv-topbar-left">
+            <span class="mv-badge-research">● Penelitian Ilmiah</span>
             <span>Arsitektur Klasifikasi Sentimen Ulasan Layanan Publik JAKI (Sastrawi + TF-IDF + Support Vector Machine)</span>
         </div>
-        <div style="font-family:'JetBrains Mono', monospace;">
-            Fitur: <strong style="color:#FFF;">{jml_vocab:,} Token</strong> &nbsp;&bull;&nbsp;
-            Metode: <strong style="color:#60A5FA;">Linear SVM</strong> &nbsp;&bull;&nbsp;
-            Peneliti: <strong style="color:#FFF;">Artha Nugraha</strong>
-        </div>
-    </div>
-    <div class="mv-header-bar">
-        <div class="mv-brand-wrap">
-            {elemen_logo}
-            <div style="display:flex; align-items:center; gap:8px;">
-                <span style="font-weight:800; font-size:1.05rem; color:#0F172A; letter-spacing:-0.01em;">JAKIVision</span>
-                <span class="mv-ver-tag">v1.0 SVM</span>
-            </div>
-        </div>
-        <div style="font-size:0.75rem; color:#64748B; font-weight:500;">
-            Sistem Analisis Sentimen Opini Publik Aplikasi Jakarta Kini (JAKI)
+        <div class="mv-topbar-right">
+            <span>Fitur: <strong style="color:#FFFFFF;">{jml_vocab:,} Token</strong></span>
+            <span>&bull;</span>
+            <span>Metode: <strong style="color:#60A5FA;">Linear SVM</strong></span>
+            <span>&bull;</span>
+            <span>Peneliti: <strong style="color:#FFFFFF;">Artha Nugraha</strong></span>
         </div>
     </div>
 """, unsafe_allow_html=True)
 
-# NAVBAR KOLOM DI ATAS (Untuk berpindah tampilan halaman/modul)
-nav_c1, nav_c2, nav_c3, nav_c4, nav_c5 = st.columns([1.2, 1.3, 1.3, 1.3, 1.2])
-with nav_c1:
+# Floating Navbar Menyatu (Logo Kiri | Menu Tengah | CTA Kanan) persis MusaVision
+nb_brand, nb_m1, nb_m2, nb_m3, nb_m4, nb_cta = st.columns([2.2, 1.05, 1.25, 1.25, 1.25, 1.15])
+
+with nb_brand:
+    st.markdown(f"""
+        <div id="mv-nav-brand">
+            {elemen_logo}
+            <span class="mv-brand-name">JAKIVision</span>
+            <span class="mv-brand-ver">v1.0 SVM</span>
+        </div>
+    """, unsafe_allow_html=True)
+
+with nb_m1:
     if st.button(
-        "Ringkasan & Landing",
+        "Ringkasan",
         type="primary" if st.session_state.halaman_aktif == "landing" else "secondary",
         use_container_width=True
     ):
         navigasi_ke("landing")
         st.rerun()
-with nav_c2:
+
+with nb_m2:
     if st.button(
-        "Studio Teks Tunggal",
-        type="primary" if st.session_state.halaman_aktif == "tunggal" else "secondary",
-        use_container_width=True
-    ):
-        navigasi_ke("tunggal")
-        st.rerun()
-with nav_c3:
-    if st.button(
-        "Pemrosesan Massal CSV",
+        "Pemrosesan CSV",
         type="primary" if st.session_state.halaman_aktif == "massal" else "secondary",
         use_container_width=True
     ):
         navigasi_ke("massal")
         st.rerun()
-with nav_c4:
-    lbl_dash = "Dashboard Visualisasi ●" if st.session_state.df_hasil is not None else "Dashboard Visualisasi"
+
+with nb_m3:
+    lbl_dash = "Visualisasi ●" if st.session_state.df_hasil is not None else "Visualisasi Data"
     if st.button(
         lbl_dash,
         type="primary" if st.session_state.halaman_aktif == "visualisasi" else "secondary",
@@ -630,20 +745,29 @@ with nav_c4:
     ):
         navigasi_ke("visualisasi")
         st.rerun()
-with nav_c5:
+
+with nb_m4:
     if st.button(
-        "Arsitektur Pipeline",
+        "Arsitektur & Pipeline",
         type="primary" if st.session_state.halaman_aktif == "pipeline" else "secondary",
         use_container_width=True
     ):
         navigasi_ke("pipeline")
         st.rerun()
 
-st.write("")
+with nb_cta:
+    if st.button(
+        "Uji Teks →",
+        type="primary" if st.session_state.halaman_aktif == "tunggal" else "primary",
+        use_container_width=True,
+        key="btn_nav_cta"
+    ):
+        navigasi_ke("tunggal")
+        st.rerun()
 
 
 # =====================================================================
-# FUNGSI MODUL REUSABLE (AGAR TAMPIL DI LANDING PAGE MAUPUN TAB SPESIFIK)
+# 6. FUNGSI KOMPONEN HALAMAN
 # =====================================================================
 def render_hero_section():
     hero_kiri, hero_kanan = st.columns([7, 5], gap="medium")
@@ -708,7 +832,7 @@ def render_hero_section():
                         "Aplikasi JAKI lemot banget pas mau lapor jalan rusak di kelurahan, sering error!"
                     </div>
                     <div style="font-family:'JetBrains Mono', monospace; font-size:0.66rem; color:#93C5FD; margin-bottom:5px;">
-                        HASIL NORMALISASI & STEMMING SASTRAWI:
+                        HASIL NORMALISASI & STEMMING SASTRAWI (8 TOKEN):
                     </div>
                     <div style="font-family:'JetBrains Mono', monospace; font-size:0.74rem; color:#BFDBFE; background:rgba(29,78,216,0.28); padding:9px 12px; border-radius:6px; border:1px dashed #60A5FA; margin-bottom:14px;">
                         aplikasi jaki <strong>lambat</strong> lapor jalan rusak lurah sering <strong>rusak</strong>
@@ -740,8 +864,8 @@ def render_studio_tunggal():
     """, unsafe_allow_html=True)
 
     st.markdown("""
-        <div class="mv-studio-card" style="padding:14px 18px; margin-bottom:16px;">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+        <div class="mv-studio-card" style="padding:14px 18px; margin-bottom:12px;">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
                 <span style="font-size:0.8rem; font-weight:700; color:#0F172A;">1. Galeri Sampel Ulasan Layanan Publik JAKI</span>
                 <span style="font-family:'JetBrains Mono', monospace; font-size:0.68rem; color:#64748B;">Klik sampel untuk memuat teks ke panel uji</span>
             </div>
@@ -783,16 +907,16 @@ def render_studio_tunggal():
             "Masukkan teks ulasan pengguna aplikasi JAKI:",
             value=st.session_state.input_sampel,
             placeholder="Contoh: Aplikasi JAKI lemot banget pas mau daftar vaksin, tolong diperbaiki!",
-            height=150
+            height=155
         )
 
-        jalankan_prediksi = st.button("Jalankan Prediksi Sentimen", type="primary", use_container_width=True)
+        jalankan_prediksi = st.button("⚡ Jalankan Prediksi Sentimen", type="primary", use_container_width=True)
 
     with col_out:
         st.markdown("""
             <div class="mv-studio-card">
                 <div class="mv-studio-top">
-                    <span class="mv-step-num">3. HASIL INFERENSI & PREPROCESSING</span>
+                    <span class="mv-step-num">3. KEPUTUSAN KLASIFIKASI SVM & BEDAH TOKEN</span>
                     <span style="font-family:'JetBrains Mono', monospace; font-size:0.68rem; color:#1D4ED8;">SVM Decision Function</span>
                 </div>
             </div>
@@ -812,16 +936,29 @@ def render_studio_tunggal():
             if user_input.strip() == "":
                 st.warning("Mohon masukkan teks ulasan terlebih dahulu.")
             else:
-                with st.spinner("Menjalankan normalisasi kata, stemming Sastrawi, dan perhitungan margin SVM..."):
-                    time.sleep(0.35)
-                    teks_bersih = pembersihan_teks(user_input)
-                    teks_vektor = tfidf_vect.transform([teks_bersih])
-                    prediction = svm_model.predict(teks_vektor)[0]
-                    jarak_margin = float(np.ravel(svm_model.decision_function(teks_vektor))[0])
-                    probabilitas = 1 / (1 + np.exp(-jarak_margin))
-                    keyakinan = probabilitas if probabilitas > 0.5 else (1 - probabilitas)
-                    persentase_yakin = round(keyakinan * 100, 1)
+                # ANIMASI SPINNER & STATUS TAHAPAN KOMPUTASI INTERAKTIF
+                with st.spinner("🔄 Mesin NLP sedang memproses normalisasi kata, stemming Sastrawi, dan margin SVM..."):
+                    with st.status("⚙️ Menjalankan Pipeline Inferensi Model SVM...", expanded=True) as status:
+                        st.write("1️⃣ **Normalisasi Leksikal & Case Folding:** Membakukan kata tidak baku dan membersihkan tanda baca...")
+                        time.sleep(0.25)
+                        detail_bedah = bedah_perubahan_teks(user_input)
+                        teks_bersih = detail_bedah["teks_bersih"]
 
+                        st.write(f"2️⃣ **Sastrawi Stemming & Stopword Removal:** Menghasilkan **{detail_bedah['jml_akhir']} token kata dasar** dari {detail_bedah['jml_awal']} kata awal...")
+                        time.sleep(0.25)
+                        teks_vektor = tfidf_vect.transform([teks_bersih])
+
+                        st.write("3️⃣ **Evaluasi Hyperplane SVM:** Menghitung jarak margin dan tingkat keyakinan klasifikasi...")
+                        time.sleep(0.25)
+                        prediction = svm_model.predict(teks_vektor)[0]
+                        jarak_margin = float(np.ravel(svm_model.decision_function(teks_vektor))[0])
+                        probabilitas = 1 / (1 + np.exp(-jarak_margin))
+                        keyakinan = probabilitas if probabilitas > 0.5 else (1 - probabilitas)
+                        persentase_yakin = round(keyakinan * 100, 1)
+
+                        status.update(label="✅ Analisis Selesai! Keputusan Klasifikasi SVM siap ditampilkan.", state="complete", expanded=False)
+
+                # KARTU KEPUTUSAN KLASIFIKASI SVM
                 if prediction == 'Positif':
                     st.markdown(f"""
                         <div class="mv-res-pos">
@@ -839,13 +976,56 @@ def render_studio_tunggal():
                         </div>
                     """, unsafe_allow_html=True)
 
-                st.progress(int(min(max(persentase_yakin, 1), 100)), text=f"Confidence Score: {persentase_yakin}% | Jarak Margin Hyperplane: {jarak_margin:.3f}")
+                st.progress(
+                    int(min(max(persentase_yakin, 1), 100)),
+                    text=f"Confidence Score: {persentase_yakin}% | Jarak Margin Hyperplane: {jarak_margin:.3f}"
+                )
 
+                # SIAPKAN BADGE HTML UNTUK TOKEN & PERUBAHAN KATA
+                if detail_bedah["token_svm"]:
+                    pills_token_svm = "".join([f'<span class="token-pill">{t}</span>' for t in detail_bedah["token_svm"]])
+                else:
+                    pills_token_svm = '<span style="color:#64748B; font-size:0.78rem;">(Tidak ada token tersisa)</span>'
+
+                if detail_bedah["perubahan"]:
+                    pills_perubahan = "".join([f'<span class="change-pill">{p}</span>' for p in detail_bedah["perubahan"]])
+                else:
+                    pills_perubahan = '<span style="color:#64748B; font-size:0.75rem;">Seluruh kata sudah berupa kata dasar baku.</span>'
+
+                stopwords_str = ", ".join(detail_bedah["stopwords_terbuang"]) if detail_bedah["stopwords_terbuang"] else "Tidak ada"
+
+                # PANEL BEDAH PERUBAHAN TEKS, KATA DASAR MASUK SVM, & HITUNGAN TOKEN
                 st.markdown(f"""
-                    <div style="background:#FFFFFF; border:1px solid #E2E8F0; border-radius:10px; padding:12px 16px; margin-top:10px; font-size:0.82rem;">
-                        <div style="font-weight:700; color:#0F172A; margin-bottom:4px;">Hasil Pembersihan Teks & Stemming Sastrawi:</div>
-                        <div style="font-family:'JetBrains Mono', monospace; color:#1D4ED8; background:#F8FAFC; padding:8px 10px; border-radius:6px; border:1px solid #E2E8F0;">
+                    <div class="bedah-card">
+                        <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #F1F5F9; padding-bottom:8px; margin-bottom:10px;">
+                            <span style="font-weight:700; font-size:0.84rem; color:#0F172A;">🔍 Bedah Perubahan Teks & Hitungan Token Masuk SVM</span>
+                            <span style="font-family:'JetBrains Mono', monospace; font-size:0.7rem; background:#EFF6FF; color:#1D4ED8; padding:2px 8px; border-radius:6px; border:1px solid #BFDBFE; font-weight:700;">
+                                {detail_bedah['jml_awal']} Kata Awal → {detail_bedah['jml_akhir']} Token Masuk SVM
+                            </span>
+                        </div>
+                        <div style="font-size:0.78rem; color:#475569; margin-bottom:8px;">
+                            <strong>Kalimat Asli ({detail_bedah['jml_awal']} kata):</strong> "{user_input}"
+                        </div>
+                        <div style="font-size:0.78rem; color:#0F172A; font-weight:600; margin-bottom:4px;">
+                            Hasil Pembersihan Teks & Stemming Sastrawi:
+                        </div>
+                        <div style="font-family:'JetBrains Mono', monospace; font-size:0.78rem; color:#1D4ED8; background:#F8FAFC; padding:8px 10px; border-radius:6px; border:1px solid #E2E8F0; margin-bottom:10px;">
                             {teks_bersih if teks_bersih else "(Teks habis terfilter stopwords)"}
+                        </div>
+                        <div style="font-size:0.76rem; color:#0F172A; font-weight:600; margin-bottom:4px;">
+                            Daftar Kata Dasar Masuk ke Vektor SVM ({detail_bedah['jml_akhir']} Token):
+                        </div>
+                        <div style="margin-bottom:10px;">
+                            {pills_token_svm}
+                        </div>
+                        <div style="font-size:0.76rem; color:#0F172A; font-weight:600; margin-bottom:4px;">
+                            Transformasi Normalisasi & Stemming Sastrawi ({len(detail_bedah['perubahan'])} perubahan):
+                        </div>
+                        <div style="margin-bottom:8px;">
+                            {pills_perubahan}
+                        </div>
+                        <div style="font-size:0.73rem; color:#64748B; border-top:1px solid #F1F5F9; padding-top:6px;">
+                            <strong>Stopwords Tereliminasi ({len(detail_bedah['stopwords_terbuang'])} kata):</strong> <code>{stopwords_str}</code>
                         </div>
                     </div>
                 """, unsafe_allow_html=True)
@@ -907,7 +1087,6 @@ def render_pemrosesan_massal():
                     else:
                         df = pd.read_excel(uploaded_file)
 
-                    # 1. FLEKSIBILITAS NAMA KOLOM (SESUAI ANALISIS_ULASAN_2.PY)
                     kandidat_kolom = ['ulasan', 'review', 'reviews', 'komentar', 'comment', 'text', 'content']
                     kolom_terpilih = None
 
@@ -922,7 +1101,6 @@ def render_pemrosesan_massal():
                 else:
                     df = df.rename(columns={kolom_terpilih: 'Ulasan'})
 
-                    # 2. VALIDASI KONTEKS BERLAPIS (KEYWORD HEURISTICS & TF-IDF OVERLAP)
                     teks_gabungan = " ".join(df['Ulasan'].dropna().astype(str).tolist()).lower()
 
                     kw_utama = ['jaki', 'jakarta kini', 'pemprov dki', 'dki jakarta', 'beritajakarta']
@@ -948,7 +1126,7 @@ def render_pemrosesan_massal():
                     else:
                         st.success(f"✅ File tervalidasi! Siap memproses data dari kolom '{kolom_terpilih}' ({df.shape[0]:,} baris).")
 
-                        if st.button("Mulai Pembersihan & Analisis Massal", type="primary", use_container_width=True):
+                        if st.button("⚡ Mulai Pembersihan & Analisis Massal", type="primary", use_container_width=True):
                             with st.spinner("Menjalankan Sastrawi Stemming dan klasifikasi SVM pada seluruh dataset..."):
                                 with st.status("Memproses Data...", expanded=True) as status:
                                     df_bersih = df.dropna(subset=['Ulasan']).copy()
@@ -961,7 +1139,7 @@ def render_pemrosesan_massal():
                                     st.session_state.df_hasil = df_bersih
                                     status.update(label="Pemrosesan Selesai!", state="complete", expanded=False)
 
-                            st.success("🎉 Pemrosesan selesai! Unduh file hasil di bawah atau buka **Dashboard Visualisasi**.")
+                            st.success("🎉 Pemrosesan selesai! Unduh file hasil di bawah atau buka **Visualisasi Data**.")
 
             except Exception as e:
                 st.error(f"Terjadi kesalahan teknis: {e}")
@@ -1117,8 +1295,8 @@ def render_dashboard_visualisasi():
     """, unsafe_allow_html=True)
 
     if st.session_state.df_hasil is None:
-        st.warning("⚠️ Silakan unggah dan proses dataset terlebih dahulu pada bagian **Pemrosesan Massal CSV** untuk mengaktifkan Dashboard Visualisasi.")
-        if st.button("Ke Pemrosesan Massal CSV →", type="primary"):
+        st.warning("⚠️ Silakan unggah dan proses dataset terlebih dahulu pada bagian **Pemrosesan CSV** untuk mengaktifkan Dashboard Visualisasi.")
+        if st.button("Ke Pemrosesan CSV →", type="primary"):
             navigasi_ke("massal")
             st.rerun()
     else:
@@ -1255,10 +1433,9 @@ def render_dashboard_visualisasi():
 
 
 # =====================================================================
-# 6. ROUTING HALAMAN BERDASARKAN NAVBAR ATAS
+# 7. ROUTING HALAMAN BERDASARKAN NAVBAR MENYATU DI ATAS
 # =====================================================================
 if st.session_state.halaman_aktif == "landing":
-    # Tampilan Landing Page Utuh dari Atas ke Bawah seperti MusaVision
     render_hero_section()
     st.write("")
     st.write("---")
