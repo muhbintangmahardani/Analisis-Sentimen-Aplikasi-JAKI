@@ -17,7 +17,7 @@ from wordcloud import WordCloud
 # =====================================================================
 st.set_page_config(
     page_title="JAKI Sentiment Analytics | Pemprov DKI",
-    page_icon="https://jaki.jakarta.go.id/favicon.ico",
+    page_icon="https://cdn.logoinspo.com/icons/jaki.png",
     layout="wide",
     initial_sidebar_state="collapsed"
 )
