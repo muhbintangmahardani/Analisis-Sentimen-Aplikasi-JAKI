@@ -777,11 +777,11 @@ def render_hero_section():
             <div class="mv-hero-box">
                 <div class="mv-domain-pill">● Natural Language Processing &bull; Text Classification</div>
                 <div class="mv-main-title">
-                    Analisis Sentimen Ulasan Layanan Publik <span class="serif-italic">(Aplikasi JAKI)</span>
+                    Analisis Sentimen Ulasan<span class="serif-italic">(Aplikasi JAKI)</span>
                 </div>
                 <div class="mv-hero-lead">
-                    Sistem klasifikasi dua kategori sentimen opini masyarakat pada aplikasi <strong>Jakarta Kini (JAKI)</strong>
-                    menggunakan normalisasi leksikal bahasa tidak baku, ekstraksi kata dasar
+                    Sistem klasifikasi dua kategori ulasan sentimen opini masyarakat pada aplikasi <strong>Jakarta Kini (JAKI)</strong>
+                    yang diambil dari Google Play Store, menggunakan normalisasi leksikal bahasa tidak baku, ekstraksi kata dasar
                     <span class="mv-inline-code">Sastrawi</span>, pembobotan matriks frekuensi kata
                     <span class="mv-inline-code">TF-IDF</span>, dan pemisahan margin maksimum
                     <span class="mv-inline-code">Support Vector Machine</span>.
