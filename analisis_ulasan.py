@@ -1,4 +1,6 @@
+import os
 import time
+import base64
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -13,145 +15,180 @@ import matplotlib.pyplot as plt
 from wordcloud import WordCloud
 
 # =====================================================================
-# 1. PENGATURAN HALAMAN STREAMLIT
+# 1. PENGATURAN HALAMAN & FUNGSI PEMBACA LOGO .WEBP LOKAL GITHUB
 # =====================================================================
 st.set_page_config(
-    page_title="JAKI Sentiment Analytics | Pemprov DKI",
-    page_icon="https://cdn.logoinspo.com/icons/jaki.png",
+    page_title="JAKIVision | Analisis Sentimen Aplikasi JAKI",
+    page_icon="🏛️",
     layout="wide",
     initial_sidebar_state="collapsed"
 )
 
+def load_local_webp_logo():
+    """
+    Mencari file logo .webp di repositori GitHub secara otomatis
+    dan mengubahnya ke Base64 agar bisa dipasang di dalam Navbar HTML.
+    """
+    kandidat_nama = ['logo_jaki.webp', 'jaki.webp', 'logo.webp']
+    for nama_file in kandidat_nama:
+        if os.path.exists(nama_file):
+            with open(nama_file, "rb") as f:
+                encoded = base64.b64encode(f.read()).decode("utf-8")
+                return f"data:image/webp;base64,{encoded}"
+    # Cari file .webp apa pun yang ada di folder utama jika namanya berbeda
+    for file in os.listdir('.'):
+        if file.lower().endswith('.webp'):
+            with open(file, "rb") as f:
+                encoded = base64.b64encode(f.read()).decode("utf-8")
+                return f"data:image/webp;base64,{encoded}"
+    return None
+
+logo_base64 = load_local_webp_logo()
+
 # =====================================================================
-# 2. CSS KUSTOM: GAYA CLEAN MUSAVISION + TEMA BIRU JAKI (NO AI SLOP)
+# 2. CSS KUSTOM: GAYA LANDING PAGE MUSAVISION (TEMA BIRU & FONT BARU)
 # =====================================================================
 st.markdown("""
     <style>
-    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Newsreader:ital,opsz,wght@1,6..72,500;1,6..72,600&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
 
     html, body, [class*="css"] {
-        font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif !important;
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif !important;
         background-color: #F8FAFC;
         color: #0F172A;
     }
 
-    /* Sembunyikan dekorasi atas bawaan Streamlit agar tidak terpotong */
     header[data-testid="stHeader"] {
         background: transparent !important;
-        height: 1.5rem !important;
+        height: 1.2rem !important;
     }
     .block-container {
-        padding-top: 1.8rem !important;
-        padding-bottom: 4rem !important;
-        max-width: 1240px !important;
+        padding-top: 1.5rem !important;
+        padding-bottom: 3rem !important;
+        max-width: 1220px !important;
     }
 
-    /* TOP STATUS BAR (Dark Navy Bar ala MusaVision) */
+    /* 1. TOP STATUS BAR (Dark Navy Bar ala MusaVision) */
     .mv-topbar {
-        background-color: #0B1736;
+        background-color: #071126;
         color: #94A3B8;
         padding: 8px 20px;
-        border-radius: 8px;
+        border-radius: 8px 8px 0 0;
         display: flex;
         flex-wrap: wrap;
         justify-content: space-between;
         align-items: center;
-        font-size: 0.74rem;
-        margin-bottom: 12px;
-        border: 1px solid #1E293B;
+        font-size: 0.72rem;
+        border-bottom: 1px solid #1E293B;
     }
-    .mv-status-dot {
+    .mv-badge-online {
         display: inline-flex;
         align-items: center;
         gap: 6px;
-        background-color: rgba(37, 99, 235, 0.2);
+        background-color: rgba(37, 99, 235, 0.22);
         color: #60A5FA;
-        border: 1px solid rgba(96, 165, 250, 0.3);
+        border: 1px solid rgba(96, 165, 250, 0.35);
         padding: 2px 9px;
         border-radius: 99px;
         font-family: 'JetBrains Mono', monospace;
-        font-size: 0.68rem;
+        font-size: 0.66rem;
         font-weight: 600;
         margin-right: 10px;
     }
 
-    /* NAVBAR BRAND HEADER */
-    .mv-navbar {
+    /* 2. HEADER BRAND BAR (Menyatu di bawah Topbar seperti MusaVision) */
+    .mv-header-bar {
         background-color: #FFFFFF;
         border: 1px solid #E2E8F0;
-        border-radius: 12px;
-        padding: 14px 24px;
+        border-top: none;
+        border-radius: 0 0 12px 12px;
+        padding: 14px 22px;
         margin-bottom: 14px;
         display: flex;
         flex-wrap: wrap;
         justify-content: space-between;
         align-items: center;
         gap: 12px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
     }
-    .mv-brand {
+    .mv-brand-wrap {
         display: flex;
         align-items: center;
-        gap: 14px;
+        gap: 12px;
     }
-    .mv-brand img {
-        height: 34px;
+    .mv-logo-img {
+        height: 32px;
         width: auto;
+        border-radius: 6px;
         object-fit: contain;
     }
-    .mv-version {
+    .mv-logo-fallback {
+        background-color: #0B1F47;
+        color: #FFFFFF;
+        font-weight: 800;
+        font-size: 0.85rem;
+        padding: 6px 10px;
+        border-radius: 6px;
+        letter-spacing: 0.04em;
+    }
+    .mv-ver-tag {
         font-family: 'JetBrains Mono', monospace;
-        font-size: 0.68rem;
+        font-size: 0.65rem;
         font-weight: 600;
-        color: #0055B8;
+        color: #1D4ED8;
         background-color: #EFF6FF;
         border: 1px solid #BFDBFE;
         padding: 2px 7px;
         border-radius: 4px;
     }
 
-    /* HERO SECTION (MusaVision Clean Editorial Style) */
-    .mv-hero-left {
+    /* 3. HERO LANDING SECTION (2-Column Editorial Style) */
+    .mv-hero-box {
         background-color: #FFFFFF;
         border: 1px solid #E2E8F0;
         border-radius: 14px;
-        padding: 30px;
+        padding: 32px;
         height: 100%;
     }
-    .mv-pill {
-        display: inline-block;
+    .mv-domain-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
         background-color: #EFF6FF;
-        color: #0055B8;
+        color: #1D4ED8;
         border: 1px solid #BFDBFE;
-        font-size: 0.7rem;
+        font-size: 0.68rem;
         font-weight: 700;
-        padding: 4px 11px;
+        padding: 4px 12px;
         border-radius: 99px;
-        letter-spacing: 0.04em;
+        letter-spacing: 0.05em;
         text-transform: uppercase;
         margin-bottom: 16px;
     }
-    .mv-hero-title {
-        font-size: 2.2rem;
+    .mv-main-title {
+        font-size: 2.35rem;
         font-weight: 800;
         color: #0F172A;
-        line-height: 1.18;
-        letter-spacing: -0.02em;
+        line-height: 1.15;
+        letter-spacing: -0.025em;
         margin-bottom: 14px;
     }
-    .mv-hero-title span {
-        color: #0055B8;
-        font-weight: 700;
+    .mv-main-title .serif-italic {
+        font-family: 'Newsreader', Georgia, serif !important;
         font-style: italic;
+        font-weight: 500;
+        color: #1D4ED8;
     }
-    .mv-hero-desc {
+    .mv-hero-lead {
         font-size: 0.92rem;
         color: #475569;
         line-height: 1.65;
         margin-bottom: 22px;
     }
-    .mv-code-tag {
+    .mv-inline-code {
         font-family: 'JetBrains Mono', monospace;
-        font-size: 0.8rem;
+        font-size: 0.78rem;
+        font-weight: 600;
         background-color: #F1F5F9;
         color: #0F172A;
         padding: 2px 6px;
@@ -159,96 +196,97 @@ st.markdown("""
         border: 1px solid #E2E8F0;
     }
 
-    /* 4 METRIC BOXES DI BAWAH HERO */
-    .mv-stat-grid {
+    /* 4 METRIC BOXES DI HERO */
+    .mv-metrics-row {
         display: grid;
         grid-template-columns: repeat(4, 1fr);
         gap: 10px;
-        margin-top: 20px;
-        padding-top: 20px;
+        margin-top: 22px;
+        padding-top: 22px;
         border-top: 1px solid #F1F5F9;
     }
-    .mv-stat-box {
+    .mv-metric-item {
         background-color: #F8FAFC;
         border: 1px solid #E2E8F0;
         border-radius: 10px;
         padding: 12px 14px;
     }
-    .mv-stat-val {
+    .mv-metric-num {
         font-family: 'JetBrains Mono', monospace;
         font-size: 1.25rem;
         font-weight: 700;
         color: #0F172A;
     }
-    .mv-stat-val.accent {
-        color: #0055B8;
+    .mv-metric-num.blue {
+        color: #1D4ED8;
     }
-    .mv-stat-lbl {
+    .mv-metric-label {
         font-size: 0.68rem;
         color: #64748B;
         margin-top: 3px;
         font-weight: 500;
     }
 
-    /* KARTU PREVIEW KANAN HERO */
-    .mv-preview-card {
+    /* KARTU PREVIEW KANAN DI HERO */
+    .mv-hero-preview {
         background-color: #FFFFFF;
         border: 1px solid #E2E8F0;
         border-radius: 14px;
-        padding: 22px;
+        padding: 20px;
         height: 100%;
     }
-    .mv-preview-top {
+    .mv-preview-bar {
         display: flex;
         justify-content: space-between;
         align-items: center;
         padding-bottom: 12px;
         margin-bottom: 14px;
         border-bottom: 1px solid #F1F5F9;
-        font-size: 0.75rem;
+        font-size: 0.74rem;
         font-weight: 700;
-        color: #334155;
+        color: #1E293B;
     }
-    .mv-preview-screen {
-        background-color: #0B1736;
+    .mv-preview-canvas {
+        background: linear-gradient(180deg, #0B1F47 0%, #071126 100%);
         border-radius: 10px;
         padding: 18px;
         color: #F8FAFC;
-        margin-bottom: 14px;
-    }
-    .mv-preview-footer {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        font-size: 0.76rem;
-        color: #64748B;
-        padding-top: 8px;
+        border: 1px solid #1E3A8A;
     }
 
-    /* SECTION HEADER ALA MUSAVISION */
+    /* SECTION HEADERS */
+    .mv-sec-header {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        align-items: flex-end;
+        margin-bottom: 18px;
+        gap: 12px;
+    }
     .mv-eyebrow {
         font-family: 'JetBrains Mono', monospace;
-        font-size: 0.7rem;
+        font-size: 0.68rem;
         font-weight: 700;
         text-transform: uppercase;
         letter-spacing: 0.08em;
-        color: #0055B8;
+        color: #1D4ED8;
         margin-bottom: 4px;
     }
-    .mv-sec-title {
+    .mv-h2 {
         font-size: 1.45rem;
         font-weight: 800;
         color: #0F172A;
-        letter-spacing: -0.01em;
-        margin-bottom: 4px;
+        letter-spacing: -0.015em;
+        margin: 0;
     }
-    .mv-sec-sub {
-        font-size: 0.86rem;
+    .mv-sec-note {
+        font-size: 0.82rem;
         color: #64748B;
-        margin-bottom: 20px;
+        max-width: 440px;
+        line-height: 1.5;
     }
 
-    /* 5 PIPELINE CARDS & TAXONOMY CARDS */
+    /* CARDS (Pipeline, Taksonomi, Spesifikasi) */
     .mv-card {
         background-color: #FFFFFF;
         border: 1px solid #E2E8F0;
@@ -259,11 +297,11 @@ st.markdown("""
         flex-direction: column;
         justify-content: space-between;
     }
-    .mv-card-tag {
+    .mv-step-tag {
         font-family: 'JetBrains Mono', monospace;
-        font-size: 0.66rem;
+        font-size: 0.65rem;
         font-weight: 700;
-        color: #0055B8;
+        color: #1D4ED8;
         background-color: #EFF6FF;
         border: 1px solid #DBEAFE;
         padding: 2px 8px;
@@ -272,21 +310,21 @@ st.markdown("""
         margin-bottom: 12px;
         width: fit-content;
     }
-    .mv-card-title {
-        font-size: 0.96rem;
+    .mv-card-h3 {
+        font-size: 0.95rem;
         font-weight: 700;
         color: #0F172A;
         margin-bottom: 6px;
     }
-    .mv-card-body {
-        font-size: 0.8rem;
+    .mv-card-p {
+        font-size: 0.79rem;
         color: #475569;
         line-height: 1.55;
         margin-bottom: 14px;
     }
-    .mv-card-meta {
+    .mv-card-foot {
         font-family: 'JetBrains Mono', monospace;
-        font-size: 0.68rem;
+        font-size: 0.67rem;
         color: #64748B;
         padding-top: 10px;
         border-top: 1px solid #F1F5F9;
@@ -294,74 +332,73 @@ st.markdown("""
         justify-content: space-between;
     }
 
-    /* STUDIO PANEL (2 Kolom Input & Output) */
-    .mv-studio-box {
+    /* STUDIO CONTAINERS */
+    .mv-studio-card {
         background-color: #FFFFFF;
         border: 1px solid #E2E8F0;
         border-radius: 12px;
-        padding: 20px 22px;
+        padding: 18px 20px;
         margin-bottom: 14px;
     }
-    .mv-studio-head {
+    .mv-studio-top {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        padding-bottom: 12px;
-        margin-bottom: 14px;
+        padding-bottom: 10px;
+        margin-bottom: 12px;
         border-bottom: 1px solid #F1F5F9;
     }
-    .mv-num-circle {
-        background-color: #0B1736;
+    .mv-step-num {
+        background-color: #071126;
         color: #FFFFFF;
         font-family: 'JetBrains Mono', monospace;
-        font-size: 0.72rem;
+        font-size: 0.7rem;
         font-weight: 700;
         padding: 3px 9px;
         border-radius: 6px;
     }
-    .mv-empty-state {
+    .mv-waiting-panel {
         background-color: #FFFFFF;
         border: 1px solid #E2E8F0;
         border-radius: 12px;
-        padding: 56px 28px;
+        padding: 52px 24px;
         text-align: center;
         color: #64748B;
     }
 
-    /* HASIL SENTIMEN BOX */
-    .mv-result-pos {
+    /* RESULT BOXES */
+    .mv-res-pos {
         background-color: #F0FDF4;
         border: 1px solid #BBF7D0;
         border-left: 5px solid #16A34A;
         border-radius: 10px;
-        padding: 18px 20px;
+        padding: 16px 18px;
         color: #14532D;
-        margin-bottom: 14px;
+        margin-bottom: 12px;
     }
-    .mv-result-neg {
+    .mv-res-neg {
         background-color: #FEF2F2;
         border: 1px solid #FECACA;
         border-left: 5px solid #DC2626;
         border-radius: 10px;
-        padding: 18px 20px;
+        padding: 16px 18px;
         color: #7F1D1D;
-        margin-bottom: 14px;
+        margin-bottom: 12px;
     }
 
-    /* BUTTON STYLING */
+    /* BUTTONS */
     div.stButton > button[kind="primary"] {
-        background-color: #0B1736 !important;
+        background-color: #071126 !important;
         color: #FFFFFF !important;
-        border: 1px solid #0B1736 !important;
+        border: 1px solid #071126 !important;
         border-radius: 8px !important;
         font-weight: 600 !important;
-        font-size: 0.84rem !important;
-        padding: 0.55rem 1.1rem !important;
-        transition: all 0.15s ease;
+        font-size: 0.82rem !important;
+        padding: 0.5rem 1rem !important;
     }
     div.stButton > button[kind="primary"]:hover {
-        background-color: #0055B8 !important;
-        border-color: #0055B8 !important;
+        background-color: #1D4ED8 !important;
+        border-color: #1D4ED8 !important;
     }
     div.stButton > button[kind="secondary"] {
         background-color: #FFFFFF !important;
@@ -369,22 +406,22 @@ st.markdown("""
         border: 1px solid #E2E8F0 !important;
         border-radius: 8px !important;
         font-weight: 600 !important;
-        font-size: 0.84rem !important;
-        padding: 0.55rem 1rem !important;
+        font-size: 0.82rem !important;
+        padding: 0.5rem 0.95rem !important;
     }
     div.stButton > button[kind="secondary"]:hover {
-        border-color: #0055B8 !important;
-        color: #0055B8 !important;
-        background-color: #F8FAFC !important;
+        border-color: #1D4ED8 !important;
+        color: #1D4ED8 !important;
+        background-color: #EFF6FF !important;
     }
 
-    /* KPI CARDS DASHBOARD */
+    /* KPI CARDS */
     .kpi-container {
         display: flex;
         flex-wrap: wrap;
         justify-content: space-between;
         gap: 16px;
-        margin-bottom: 24px;
+        margin-bottom: 22px;
     }
     .kpi-card {
         flex: 1;
@@ -393,13 +430,12 @@ st.markdown("""
         padding: 20px;
         border-radius: 12px;
         border: 1px solid #E2E8F0;
-        text-align: left;
     }
     .kpi-total { border-left: 5px solid #64748B; }
     .kpi-positif { border-left: 5px solid #4E79A7; }
     .kpi-negatif { border-left: 5px solid #E15759; }
     .kpi-title {
-        font-size: 0.78rem;
+        font-size: 0.76rem;
         font-weight: 600;
         color: #64748B;
         text-transform: uppercase;
@@ -408,15 +444,28 @@ st.markdown("""
     }
     .kpi-value {
         font-family: 'JetBrains Mono', monospace;
-        font-size: 2rem;
+        font-size: 1.95rem;
         font-weight: 800;
         margin: 0;
+    }
+
+    /* FOOTER */
+    .mv-footer {
+        margin-top: 40px;
+        padding-top: 20px;
+        border-top: 1px solid #E2E8F0;
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 0.76rem;
+        color: #64748B;
     }
     </style>
 """, unsafe_allow_html=True)
 
 # =====================================================================
-# 3. INISIALISASI SASTRAWI & NLTK
+# 3. INISIALISASI SASTRAWI, STOPWORDS, & MODEL SVM
 # =====================================================================
 @st.cache_resource
 def load_text_processor():
@@ -494,371 +543,276 @@ def load_models():
 
 try:
     svm_model, tfidf_vect = load_models()
-    jml_fitur_tfidf = len(tfidf_vect.vocabulary_) if hasattr(tfidf_vect, 'vocabulary_') else 2500
+    jml_vocab = len(tfidf_vect.vocabulary_) if hasattr(tfidf_vect, 'vocabulary_') else 2500
 except Exception:
     st.error("Gagal memuat file .pkl. Pastikan model_svm_jaki.pkl dan tfidf_jaki.pkl berada di direktori yang sama.")
     st.stop()
 
 # =====================================================================
-# 4. STATE NAVIGASI
+# 4. STATE MANAGEMENT
 # =====================================================================
 if 'df_hasil' not in st.session_state:
     st.session_state.df_hasil = None
-if 'nav_aktif' not in st.session_state:
-    st.session_state.nav_aktif = "ringkasan"
-if 'teks_uji' not in st.session_state:
-    st.session_state.teks_uji = ""
+if 'halaman_aktif' not in st.session_state:
+    st.session_state.halaman_aktif = "landing"
+if 'input_sampel' not in st.session_state:
+    st.session_state.input_sampel = ""
 
-def set_nav(menu):
-    st.session_state.nav_aktif = menu
+def navigasi_ke(nama_halaman):
+    st.session_state.halaman_aktif = nama_halaman
 
 # =====================================================================
-# 5. TOP STATUS BAR & BRAND NAVBAR (DENGAN LOGO JAKI CDN)
+# 5. TOPBAR & NAVBAR UTAMA (DENGAN LOGO .WEBP DARI GITHUB)
 # =====================================================================
-LOGO_JAKI_CDN = "https://upload.wikimedia.org/wikipedia/commons/thumb/e/eb/Coat_of_arms_of_Jakarta.svg/240px-Coat_of_arms_of_Jakarta.svg.png"
+if logo_base64:
+    elemen_logo = f'<img src="{logo_base64}" class="mv-logo-img" alt="Logo JAKI">'
+else:
+    elemen_logo = '<div class="mv-logo-fallback">JAKI</div>'
 
 st.markdown(f"""
     <div class="mv-topbar">
         <div>
-            <span class="mv-status-dot">● SVM ENGINE READY</span>
-            <span>Arsitektur Klasifikasi Sentimen Ulasan Aplikasi JAKI (Sastrawi + TF-IDF + Linear SVM)</span>
+            <span class="mv-badge-online">● SVM MODEL SIAP</span>
+            <span>Arsitektur Klasifikasi Sentimen Ulasan Layanan Publik JAKI (Sastrawi + TF-IDF + Support Vector Machine)</span>
         </div>
-        <div style="font-family:'JetBrains Mono', monospace; font-size:0.7rem;">
-            Vocabulary: <strong style="color:#FFF;">{jml_fitur_tfidf:,} Token</strong> &nbsp;|&nbsp;
-            Metode: <strong style="color:#60A5FA;">Support Vector Machine</strong> &nbsp;|&nbsp;
+        <div style="font-family:'JetBrains Mono', monospace;">
+            Fitur: <strong style="color:#FFF;">{jml_vocab:,} Token</strong> &nbsp;&bull;&nbsp;
+            Metode: <strong style="color:#60A5FA;">Linear SVM</strong> &nbsp;&bull;&nbsp;
             Peneliti: <strong style="color:#FFF;">Artha Nugraha</strong>
         </div>
     </div>
-    <div class="mv-navbar">
-        <div class="mv-brand">
-            <img src="{LOGO_JAKI_CDN}" alt="Logo DKI Jakarta">
-            <div>
-                <div style="display:flex; align-items:center; gap:8px;">
-                    <span style="font-weight:800; font-size:1.05rem; color:#0F172A; letter-spacing:-0.01em;">JAKISentiment</span>
-                    <span class="mv-version">v1.0 SVM</span>
-                </div>
-                <div style="font-size:0.74rem; color:#64748B;">Sistem Evaluasi Opini Publik Aplikasi Jakarta Kini (JAKI)</div>
+    <div class="mv-header-bar">
+        <div class="mv-brand-wrap">
+            {elemen_logo}
+            <div style="display:flex; align-items:center; gap:8px;">
+                <span style="font-weight:800; font-size:1.05rem; color:#0F172A; letter-spacing:-0.01em;">JAKIVision</span>
+                <span class="mv-ver-tag">v1.0 SVM</span>
             </div>
         </div>
-        <div style="font-size:0.76rem; color:#64748B; font-weight:500;">
-            Gunakan navigasi kolom di bawah untuk berpindah modul:
+        <div style="font-size:0.75rem; color:#64748B; font-weight:500;">
+            Sistem Analisis Sentimen Opini Publik Aplikasi Jakarta Kini (JAKI)
         </div>
     </div>
 """, unsafe_allow_html=True)
 
-# NAVBAR 4 KOLOM
-c_nav1, c_nav2, c_nav3, c_nav4 = st.columns(4)
-with c_nav1:
+# NAVBAR KOLOM DI ATAS (Untuk berpindah tampilan halaman/modul)
+nav_c1, nav_c2, nav_c3, nav_c4, nav_c5 = st.columns([1.2, 1.3, 1.3, 1.3, 1.2])
+with nav_c1:
     if st.button(
-        "Ringkasan & Arsitektur",
-        type="primary" if st.session_state.nav_aktif == "ringkasan" else "secondary",
+        "Ringkasan & Landing",
+        type="primary" if st.session_state.halaman_aktif == "landing" else "secondary",
         use_container_width=True
     ):
-        set_nav("ringkasan")
+        navigasi_ke("landing")
         st.rerun()
-with c_nav2:
+with nav_c2:
     if st.button(
-        "Studio Analisis Teks Tunggal",
-        type="primary" if st.session_state.nav_aktif == "tunggal" else "secondary",
+        "Studio Teks Tunggal",
+        type="primary" if st.session_state.halaman_aktif == "tunggal" else "secondary",
         use_container_width=True
     ):
-        set_nav("tunggal")
+        navigasi_ke("tunggal")
         st.rerun()
-with c_nav3:
+with nav_c3:
     if st.button(
-        "Pemrosesan Massal (CSV)",
-        type="primary" if st.session_state.nav_aktif == "massal" else "secondary",
+        "Pemrosesan Massal CSV",
+        type="primary" if st.session_state.halaman_aktif == "massal" else "secondary",
         use_container_width=True
     ):
-        set_nav("massal")
+        navigasi_ke("massal")
         st.rerun()
-with c_nav4:
-    label_viz = "Dashboard Visualisasi (Aktif)" if st.session_state.df_hasil is not None else "Dashboard Visualisasi"
+with nav_c4:
+    lbl_dash = "Dashboard Visualisasi ●" if st.session_state.df_hasil is not None else "Dashboard Visualisasi"
     if st.button(
-        label_viz,
-        type="primary" if st.session_state.nav_aktif == "visualisasi" else "secondary",
+        lbl_dash,
+        type="primary" if st.session_state.halaman_aktif == "visualisasi" else "secondary",
         use_container_width=True
     ):
-        set_nav("visualisasi")
+        navigasi_ke("visualisasi")
+        st.rerun()
+with nav_c5:
+    if st.button(
+        "Arsitektur Pipeline",
+        type="primary" if st.session_state.halaman_aktif == "pipeline" else "secondary",
+        use_container_width=True
+    ):
+        navigasi_ke("pipeline")
         st.rerun()
 
 st.write("")
 
-# =====================================================================
-# MODUL 1: RINGKASAN & ARSITEKTUR (LANDING PAGE GAYA MUSAVISION)
-# =====================================================================
-if st.session_state.nav_aktif == "ringkasan":
 
-    hero_l, hero_r = st.columns([7, 5], gap="medium")
+# =====================================================================
+# FUNGSI MODUL REUSABLE (AGAR TAMPIL DI LANDING PAGE MAUPUN TAB SPESIFIK)
+# =====================================================================
+def render_hero_section():
+    hero_kiri, hero_kanan = st.columns([7, 5], gap="medium")
 
-    with hero_l:
+    with hero_kiri:
         st.markdown(f"""
-            <div class="mv-hero-left">
-                <div class="mv-pill">● Natural Language Processing &bull; Jakarta Smart City</div>
-                <div class="mv-hero-title">
-                    Klasifikasi Sentimen Ulasan Layanan Publik <span>(Aplikasi JAKI)</span>
+            <div class="mv-hero-box">
+                <div class="mv-domain-pill">● Natural Language Processing &bull; Text Classification</div>
+                <div class="mv-main-title">
+                    Analisis Sentimen Ulasan Layanan Publik <span class="serif-italic">(Aplikasi JAKI)</span>
                 </div>
-                <div class="mv-hero-desc">
-                    Sistem analisis opini dan keluhan warga DKI Jakarta pada aplikasi <strong>JAKI</strong> menggunakan
-                    normalisasi bahasa tidak baku, <em>stemming</em> Bahasa Indonesia <span class="mv-code-tag">Sastrawi</span>,
-                    ekstraksi bobot kata <span class="mv-code-tag">TF-IDF</span>, serta pemisahan <em>hyperplane</em>
-                    <span class="mv-code-tag">Support Vector Machine</span>.
+                <div class="mv-hero-lead">
+                    Sistem klasifikasi dua kategori sentimen opini masyarakat pada aplikasi <strong>Jakarta Kini (JAKI)</strong>
+                    menggunakan normalisasi leksikal bahasa tidak baku, ekstraksi kata dasar
+                    <span class="mv-inline-code">Sastrawi</span>, pembobotan matriks frekuensi kata
+                    <span class="mv-inline-code">TF-IDF</span>, dan pemisahan margin maksimum
+                    <span class="mv-inline-code">Support Vector Machine</span>.
                 </div>
-                <div class="mv-stat-grid">
-                    <div class="mv-stat-box">
-                        <div class="mv-stat-val">{jml_fitur_tfidf:,}</div>
-                        <div class="mv-stat-lbl">Kosakata TF-IDF</div>
+                <div class="mv-metrics-row">
+                    <div class="mv-metric-item">
+                        <div class="mv-metric-num">{jml_vocab:,}</div>
+                        <div class="mv-metric-label">Dimensi Kosakata</div>
                     </div>
-                    <div class="mv-stat-box">
-                        <div class="mv-stat-val accent">2 Kelas</div>
-                        <div class="mv-stat-lbl">Positif & Negatif</div>
+                    <div class="mv-metric-item">
+                        <div class="mv-metric-num blue">Linear</div>
+                        <div class="mv-metric-label">Kernel Hyperplane</div>
                     </div>
-                    <div class="mv-stat-box">
-                        <div class="mv-stat-val">Linear</div>
-                        <div class="mv-stat-lbl">Kernel Margin SVM</div>
+                    <div class="mv-metric-item">
+                        <div class="mv-metric-num">2 Kelas</div>
+                        <div class="mv-metric-label">Positif & Negatif</div>
                     </div>
-                    <div class="mv-stat-box">
-                        <div class="mv-stat-val accent">~10 ms</div>
-                        <div class="mv-stat-lbl">Inferensi Teks</div>
+                    <div class="mv-metric-item">
+                        <div class="mv-metric-num blue">~12 ms</div>
+                        <div class="mv-metric-label">Waktu Inferensi</div>
                     </div>
                 </div>
             </div>
         """, unsafe_allow_html=True)
 
-        b_cta1, b_cta2 = st.columns(2)
-        with b_cta1:
-            if st.button("Buka Studio Analisis Teks →", type="primary", use_container_width=True):
-                set_nav("tunggal")
+        b1, b2 = st.columns(2)
+        with b1:
+            if st.button("Buka Studio Analisis Teks →", type="primary", use_container_width=True, key="cta_hero_1"):
+                navigasi_ke("tunggal")
                 st.rerun()
-        with b_cta2:
-            if st.button("Unggah Dataset CSV JAKI →", type="secondary", use_container_width=True):
-                set_nav("massal")
+        with b2:
+            if st.button("Unggah Dataset CSV JAKI →", type="secondary", use_container_width=True, key="cta_hero_2"):
+                navigasi_ke("massal")
                 st.rerun()
 
-    with hero_r:
-        st.markdown(f"""
-            <div class="mv-preview-card">
-                <div class="mv-preview-top">
-                    <span style="color:#0055B8;">● Simulasi Inferensi Model SVM</span>
-                    <span style="font-family:'JetBrains Mono', monospace; font-size:0.68rem; color:#64748B;">model_svm_jaki.pkl</span>
+    with hero_kanan:
+        st.markdown("""
+            <div class="mv-hero-preview">
+                <div class="mv-preview-bar">
+                    <span style="color:#1D4ED8;">● Klasifikasi Margin Hyperplane SVM</span>
+                    <span style="font-family:'JetBrains Mono', monospace; font-size:0.66rem; color:#64748B;">model_svm_jaki.pkl</span>
                 </div>
-                <div class="mv-preview-screen">
-                    <div style="font-family:'JetBrains Mono', monospace; font-size:0.68rem; color:#93C5FD; margin-bottom:6px;">
-                        INPUT ULASAN WARGA:
+                <div class="mv-preview-canvas">
+                    <div style="font-family:'JetBrains Mono', monospace; font-size:0.66rem; color:#93C5FD; margin-bottom:5px;">
+                        TEKS ULASAN MASUKAN:
                     </div>
-                    <div style="font-size:0.84rem; color:#F8FAFC; line-height:1.5; background:rgba(255,255,255,0.06); padding:10px 12px; border-radius:6px; margin-bottom:12px; border:1px solid rgba(255,255,255,0.1);">
+                    <div style="font-size:0.82rem; color:#F8FAFC; line-height:1.5; background:rgba(255,255,255,0.06); padding:10px 12px; border-radius:6px; margin-bottom:12px; border:1px solid rgba(255,255,255,0.1);">
                         "Aplikasi JAKI lemot banget pas mau lapor jalan rusak di kelurahan, sering error!"
                     </div>
-                    <div style="font-family:'JetBrains Mono', monospace; font-size:0.68rem; color:#93C5FD; margin-bottom:6px;">
-                        TOKEN SASTRAWI & NORMALISASI:
+                    <div style="font-family:'JetBrains Mono', monospace; font-size:0.66rem; color:#93C5FD; margin-bottom:5px;">
+                        HASIL NORMALISASI & STEMMING SASTRAWI:
                     </div>
-                    <div style="font-family:'JetBrains Mono', monospace; font-size:0.75rem; color:#BFDBFE; background:rgba(0,85,184,0.28); padding:9px 12px; border-radius:6px; border:1px dashed #60A5FA; margin-bottom:14px;">
+                    <div style="font-family:'JetBrains Mono', monospace; font-size:0.74rem; color:#BFDBFE; background:rgba(29,78,216,0.28); padding:9px 12px; border-radius:6px; border:1px dashed #60A5FA; margin-bottom:14px;">
                         aplikasi jaki <strong>lambat</strong> lapor jalan rusak lurah sering <strong>rusak</strong>
                     </div>
-                    <div style="display:flex; justify-content:space-between; align-items:center; background:rgba(220,38,38,0.2); border:1px solid #F87171; padding:10px 14px; border-radius:8px;">
-                        <span style="font-size:0.76rem; font-weight:700; color:#FCA5A5;">PREDIKSI: SENTIMEN NEGATIF</span>
-                        <span style="font-family:'JetBrains Mono', monospace; font-size:0.78rem; font-weight:700; color:#FFF;">Conf: 94.6%</span>
+                    <div style="display:flex; justify-content:space-between; align-items:center; background:rgba(220,38,38,0.22); border:1px solid #F87171; padding:10px 14px; border-radius:8px;">
+                        <span style="font-size:0.74rem; font-weight:700; color:#FCA5A5;">PREDIKSI: SENTIMEN NEGATIF</span>
+                        <span style="font-family:'JetBrains Mono', monospace; font-size:0.76rem; font-weight:700; color:#FFF;">Confidence: 94.6%</span>
                     </div>
                 </div>
-                <div class="mv-preview-footer">
-                    <span>Kategori: <strong>Keluhan Teknis & Layanan</strong></span>
-                    <span style="color:#0055B8; font-weight:700;">✓ Tervalidasi</span>
+                <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.74rem; color:#64748B; padding-top:12px;">
+                    <span>Kategori: <strong style="color:#0F172A;">Keluhan Teknis & Layanan</strong></span>
+                    <span style="color:#1D4ED8; font-weight:700;">✓ Tervalidasi</span>
                 </div>
             </div>
         """, unsafe_allow_html=True)
 
-    st.write("")
-    st.write("---")
 
-    # LIMA TAHAP PIPELINE KOMPUTASI (Panduan Orang Awam)
+def render_studio_tunggal():
     st.markdown("""
-        <div class="mv-eyebrow">ARSITEKTUR & METODOLOGI</div>
-        <div class="mv-sec-title">Lima Tahap Pipeline Komputasi Analisis Sentimen</div>
-        <div class="mv-sec-sub">Penjelasan berurutan bagi pengguna awam mengenai cara kerja sistem mengubah teks ulasan warga menjadi keputusan sentimen:</div>
+        <div class="mv-sec-header">
+            <div>
+                <div class="mv-eyebrow">STUDIO PENGUJIAN MODEL</div>
+                <h2 class="mv-h2">Analisis Teks Tunggal & Diagnosis Sentimen</h2>
+            </div>
+            <div class="mv-sec-note">
+                Pilih salah satu sampel ulasan di bawah atau masukkan kalimat ulasan pengguna JAKI secara manual untuk menguji klasifikasi secara langsung.
+            </div>
+        </div>
     """, unsafe_allow_html=True)
 
-    p1, p2, p3, p4, p5 = st.columns(5)
-    with p1:
-        st.markdown("""
-            <div class="mv-card">
-                <div>
-                    <div class="mv-card-tag">01 / INPUT GUARD</div>
-                    <div class="mv-card-title">Validasi Konteks JAKI</div>
-                    <div class="mv-card-body">Memeriksa kesesuaian topik ulasan agar hanya memproses data layanan aplikasi JAKI dan menolak dataset e-commerce.</div>
-                </div>
-                <div class="mv-card-meta"><span>Filter Domain</span><span>Heuristic</span></div>
-            </div>
-        """, unsafe_allow_html=True)
-    with p2:
-        st.markdown("""
-            <div class="mv-card">
-                <div>
-                    <div class="mv-card-tag">02 / NORMALISASI</div>
-                    <div class="mv-card-title">Case Folding & Slang</div>
-                    <div class="mv-card-body">Menyeragamkan huruf kecil, menghapus simbol/URL, dan membakukan kata gaul (<em>"lemot/ngelag"</em> menjadi <em>"lambat"</em>).</div>
-                </div>
-                <div class="mv-card-meta"><span>Kamus Baku</span><span>Regex</span></div>
-            </div>
-        """, unsafe_allow_html=True)
-    with p3:
-        st.markdown("""
-            <div class="mv-card">
-                <div>
-                    <div class="mv-card-tag">03 / PREPROCESSING</div>
-                    <div class="mv-card-title">Stopwords & Sastrawi</div>
-                    <div class="mv-card-body">Menghapus kata hubung umum tanpa membuang kata negasi (<em>"tidak, belum, jangan"</em>) lalu mengubahnya ke kata dasar.</div>
-                </div>
-                <div class="mv-card-meta"><span>Stemmer</span><span>NLTK + Sastrawi</span></div>
-            </div>
-        """, unsafe_allow_html=True)
-    with p4:
-        st.markdown("""
-            <div class="mv-card">
-                <div>
-                    <div class="mv-card-tag">04 / EKSTRAKSI FITUR</div>
-                    <div class="mv-card-title">Vektorisasi TF-IDF</div>
-                    <div class="mv-card-body">Mengubah kumpulan kata dasar menjadi matriks bobot numerik berdasarkan frekuensi kemunculan kata di dalam dokumen.</div>
-                </div>
-                <div class="mv-card-meta"><span>Matriks</span><span>tfidf_jaki.pkl</span></div>
-            </div>
-        """, unsafe_allow_html=True)
-    with p5:
-        st.markdown("""
-            <div class="mv-card">
-                <div>
-                    <div class="mv-card-tag">05 / KLASIFIKASI</div>
-                    <div class="mv-card-title">Hyperplane SVM</div>
-                    <div class="mv-card-body">Menghitung jarak margin terhadap bidang pemisah terbaik untuk menentukan kelas sentimen Positif atau Negatif.</div>
-                </div>
-                <div class="mv-card-meta"><span>Classifier</span><span>Sigmoid Margin</span></div>
-            </div>
-        """, unsafe_allow_html=True)
-
-    st.write("")
-    st.write("---")
-
-    # TAKSONOMI TARGET & PANDUAN PENGGUNAAN (Gaya MusaVision)
     st.markdown("""
-        <div class="mv-eyebrow">TAKSONOMI KELAS SENTIMEN & PANDUAN</div>
-        <div class="mv-sec-title">Karakteristik Kelas Sentimen & Cara Penggunaan</div>
-        <div class="mv-sec-sub">Pola bahasa yang dikenali oleh model pada ulasan pengguna aplikasi JAKI:</div>
+        <div class="mv-studio-card" style="padding:14px 18px; margin-bottom:16px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                <span style="font-size:0.8rem; font-weight:700; color:#0F172A;">1. Galeri Sampel Ulasan Layanan Publik JAKI</span>
+                <span style="font-family:'JetBrains Mono', monospace; font-size:0.68rem; color:#64748B;">Klik sampel untuk memuat teks ke panel uji</span>
+            </div>
+        </div>
     """, unsafe_allow_html=True)
 
-    t1, t2, t3 = st.columns(3)
-    with t1:
-        st.markdown("""
-            <div class="mv-card">
-                <div>
-                    <div class="mv-card-tag" style="background:#ECFDF5; color:#059669; border-color:#A7F3D0;">KELAS TARGET 01</div>
-                    <div class="mv-card-title">Sentimen Positif (Apresiasi Warga)</div>
-                    <div class="mv-card-body">Mencakup ulasan kepuasan terhadap kecepatan tindak lanjut petugas JakLapor, kemudahan cek pajak/KTP, dan fitur layanan publik DKI yang membantu warga.</div>
-                </div>
-                <div class="mv-card-meta"><span>Indikator Warna</span><span style="color:#0055B8; font-weight:700;">Biru (#4E79A7)</span></div>
-            </div>
-        """, unsafe_allow_html=True)
-    with t2:
-        st.markdown("""
-            <div class="mv-card">
-                <div>
-                    <div class="mv-card-tag" style="background:#FEF2F2; color:#DC2626; border-color:#FECACA;">KELAS TARGET 02</div>
-                    <div class="mv-card-title">Sentimen Negatif (Keluhan & Kendala)</div>
-                    <div class="mv-card-body">Mencakup keluhan teknis aplikasi (lambat, gagal masuk, layar kosong/error) maupun keluhan atas lambatnya respon penanganan laporan di lapangan.</div>
-                </div>
-                <div class="mv-card-meta"><span>Indikator Warna</span><span style="color:#DC2626; font-weight:700;">Merah (#E15759)</span></div>
-            </div>
-        """, unsafe_allow_html=True)
-    with t3:
-        st.markdown("""
-            <div class="mv-card" style="background-color:#0B1736; color:#FFFFFF; border-color:#0B1736;">
-                <div>
-                    <div class="mv-card-tag" style="background:rgba(255,255,255,0.12); color:#93C5FD; border-color:transparent;">PANDUAN CEPAT AWAM</div>
-                    <div class="mv-card-title" style="color:#FFFFFF;">Mulai Uji Model Sekarang</div>
-                    <div class="mv-card-body" style="color:#CBD5E1;">Pilih menu <strong>Studio Analisis Teks Tunggal</strong> di atas untuk menguji satu kalimat, atau buka <strong>Pemrosesan Massal (CSV)</strong> untuk menganalisis tabel data scraping.</div>
-                </div>
-                <div class="mv-card-meta" style="border-top-color:rgba(255,255,255,0.12); color:#93C5FD;"><span>Status Sistem</span><span>Siap Digunakan</span></div>
-            </div>
-        """, unsafe_allow_html=True)
-
-
-# =====================================================================
-# MODUL 2: STUDIO ANALISIS TEKS TUNGGAL (2 KOLOM ALA MUSAVISION)
-# =====================================================================
-elif st.session_state.nav_aktif == "tunggal":
-
-    st.markdown("""
-        <div class="mv-eyebrow">STUDIO PENGUJIAN MODEL</div>
-        <div class="mv-sec-title">Analisis Sentimen Teks Tunggal & Diagnosis NLP</div>
-        <div class="mv-sec-sub">Pilih salah satu sampel ulasan di bawah atau ketik kalimat ulasan secara manual untuk melihat hasil klasifikasi SVM beserta tahapan pembersihan katanya.</div>
-    """, unsafe_allow_html=True)
-
-    # BARIS SAMPEL CEPAT UNTUK ORANG AWAM
-    st.markdown("<div style='font-size:0.8rem; font-weight:700; color:#334155; margin-bottom:8px;'>1. Galeri Sampel Ulasan Warga (Klik untuk mengisi otomatis):</div>", unsafe_allow_html=True)
-    sc1, sc2, sc3, sc4, sc5 = st.columns(5)
-    with sc1:
-        if st.button("Apresiasi JakLapor", use_container_width=True):
-            st.session_state.teks_uji = "Aplikasi JAKI sangat membantu warga DKI, kemarin saya lapor jalan berlubang di kelurahan langsung ditindak cepat oleh petugas!"
-    with sc2:
-        if st.button("Keluhan Aplikasi Lemot", use_container_width=True):
-            st.session_state.teks_uji = "Aplikasi JAKI lemot banget pas mau daftar vaksin dan sering error blank putih, tolong segera diperbaiki servernya!"
-    with sc3:
-        if st.button("Kemudahan Layanan DKI", use_container_width=True):
-            st.session_state.teks_uji = "Keren banget aplikasi JAKI sekarang, cek informasi pajak dan fasilitas umum di Jakarta jadi jauh lebih praktis dan bagus."
-    with sc4:
-        if st.button("Keluhan Respon Lambat", use_container_width=True):
-            st.session_state.teks_uji = "Percuma lapor parkir liar dan sampah lewat JAKI kalau respon petugasnya lelet banget, aplikasinya juga sering ngelag."
-    with sc5:
-        if st.button("Reset Masukan", use_container_width=True):
-            st.session_state.teks_uji = ""
+    s1, s2, s3, s4, s5 = st.columns(5)
+    with s1:
+        if st.button("Respon JakLapor Cepat", use_container_width=True):
+            st.session_state.input_sampel = "Aplikasi JAKI sangat membantu warga DKI, kemarin saya lapor lampu jalan mati di kelurahan langsung ditindak cepat oleh petugas!"
+    with s2:
+        if st.button("Kendala Server Lambat", use_container_width=True):
+            st.session_state.input_sampel = "Aplikasi JAKI lemot banget pas mau daftar vaksin dan sering error blank putih, tolong segera diperbaiki servernya!"
+    with s3:
+        if st.button("Integrasi Layanan Pajak", use_container_width=True):
+            st.session_state.input_sampel = "Keren banget aplikasi JAKI sekarang, cek informasi pajak PBB dan administrasi warga Jakarta jadi jauh lebih praktis dan bagus."
+    with s4:
+        if st.button("Keluhan Tindak Lanjut", use_container_width=True):
+            st.session_state.input_sampel = "Percuma lapor parkir liar dan sampah lewat JAKI kalau respon petugasnya lelet banget, aplikasinya juga sering ngelag."
+    with s5:
+        if st.button("Kosongkan Masukan", use_container_width=True):
+            st.session_state.input_sampel = ""
 
     st.write("")
 
-    # 2 KOLOM STUDIO (Kiri: Input Teks, Kanan: Hasil Diagnosis)
-    st_kiri, st_kanan = st.columns([5, 7], gap="medium")
+    col_in, col_out = st.columns([5, 7], gap="medium")
 
-    with st_kiri:
+    with col_in:
         st.markdown("""
-            <div class="mv-studio-box">
-                <div class="mv-studio-head">
-                    <span class="mv-num-circle">2. MASUKAN TEKS ULASAN</span>
-                    <span style="font-family:'JetBrains Mono', monospace; font-size:0.7rem; color:#64748B;">ID / Slang Jakarta</span>
+            <div class="mv-studio-card">
+                <div class="mv-studio-top">
+                    <span class="mv-step-num">2. MASUKAN TEKS & PARAMETER</span>
+                    <span style="font-family:'JetBrains Mono', monospace; font-size:0.68rem; color:#64748B;">Teks Bahasa Indonesia</span>
                 </div>
             </div>
         """, unsafe_allow_html=True)
 
         user_input = st.text_area(
-            "Ketik keluhan atau ulasan pengguna JAKI secara manual:",
-            value=st.session_state.teks_uji,
+            "Masukkan teks ulasan pengguna aplikasi JAKI:",
+            value=st.session_state.input_sampel,
             placeholder="Contoh: Aplikasi JAKI lemot banget pas mau daftar vaksin, tolong diperbaiki!",
             height=150
         )
 
-        btn_prediksi = st.button("Jalankan Prediksi Sentimen", type="primary", use_container_width=True)
+        jalankan_prediksi = st.button("Jalankan Prediksi Sentimen", type="primary", use_container_width=True)
 
-    with st_kanan:
+    with col_out:
         st.markdown("""
-            <div class="mv-studio-box">
-                <div class="mv-studio-head">
-                    <span class="mv-num-circle">3. HASIL KLASIFIKASI & BEDAH PREPROCESSING</span>
-                    <span style="font-family:'JetBrains Mono', monospace; font-size:0.7rem; color:#0055B8;">SVM Decision Margin</span>
+            <div class="mv-studio-card">
+                <div class="mv-studio-top">
+                    <span class="mv-step-num">3. HASIL INFERENSI & PREPROCESSING</span>
+                    <span style="font-family:'JetBrains Mono', monospace; font-size:0.68rem; color:#1D4ED8;">SVM Decision Function</span>
                 </div>
             </div>
         """, unsafe_allow_html=True)
 
-        if not btn_prediksi:
+        if not jalankan_prediksi:
             st.markdown("""
-                <div class="mv-empty-state">
-                    <div style="font-weight:700; color:#0F172A; font-size:0.96rem; margin-bottom:6px;">Menunggu Masukan Teks Ulasan</div>
-                    <div style="font-size:0.82rem; max-width:420px; margin:0 auto; line-height:1.55;">
-                        Pilih salah satu sampel cepat di atas atau ketik kalimat ulasan di sebelah kiri, kemudian tekan tombol
-                        <strong>Jalankan Prediksi Sentimen</strong> untuk menampilkan hasil analisis.
+                <div class="mv-waiting-panel">
+                    <div style="font-weight:700; color:#0F172A; font-size:0.95rem; margin-bottom:6px;">Menunggu Masukan Teks Ulasan</div>
+                    <div style="font-size:0.8rem; max-width:410px; margin:0 auto; line-height:1.55;">
+                        Pilih salah satu sampel ulasan di atas atau ketik kalimat ulasan pada panel sebelah kiri, kemudian klik
+                        <strong>Jalankan Prediksi Sentimen</strong> untuk memproses analisis.
                     </div>
                 </div>
             """, unsafe_allow_html=True)
         else:
             if user_input.strip() == "":
-                st.warning("Mohon masukkan teks ulasan terlebih dahulu pada kolom sebelah kiri.")
+                st.warning("Mohon masukkan teks ulasan terlebih dahulu.")
             else:
-                with st.spinner("Menjalankan normalisasi kata, stemming Sastrawi, dan klasifikasi SVM..."):
+                with st.spinner("Menjalankan normalisasi kata, stemming Sastrawi, dan perhitungan margin SVM..."):
                     time.sleep(0.35)
                     teks_bersih = pembersihan_teks(user_input)
                     teks_vektor = tfidf_vect.transform([teks_bersih])
@@ -870,88 +824,90 @@ elif st.session_state.nav_aktif == "tunggal":
 
                 if prediction == 'Positif':
                     st.markdown(f"""
-                        <div class="mv-result-pos">
-                            <div style="font-family:'JetBrains Mono', monospace; font-size:0.7rem; font-weight:700; text-transform:uppercase;">Hasil Prediksi Model SVM</div>
-                            <div style="font-size:1.45rem; font-weight:800; margin:4px 0;">Sentimen POSITIF (Keyakinan: {persentase_yakin}%)</div>
-                            <div style="font-size:0.84rem;">Ulasan terklasifikasi sebagai bentuk apresiasi atau kepuasan terhadap layanan aplikasi JAKI.</div>
+                        <div class="mv-res-pos">
+                            <div style="font-family:'JetBrains Mono', monospace; font-size:0.68rem; font-weight:700; text-transform:uppercase;">Keputusan Klasifikasi SVM</div>
+                            <div style="font-size:1.4rem; font-weight:800; margin:4px 0;">Sentimen POSITIF (Tingkat Keyakinan: {persentase_yakin}%)</div>
+                            <div style="font-size:0.82rem;">Ulasan terklasifikasi mengandung sentimen positif atau kepuasan terhadap layanan aplikasi JAKI.</div>
                         </div>
                     """, unsafe_allow_html=True)
                 else:
                     st.markdown(f"""
-                        <div class="mv-result-neg">
-                            <div style="font-family:'JetBrains Mono', monospace; font-size:0.7rem; font-weight:700; text-transform:uppercase;">Hasil Prediksi Model SVM</div>
-                            <div style="font-size:1.45rem; font-weight:800; margin:4px 0;">Sentimen NEGATIF (Keyakinan: {persentase_yakin}%)</div>
-                            <div style="font-size:0.84rem;">Ulasan terklasifikasi sebagai keluhan teknis aplikasi atau ketidakpuasan layanan publik.</div>
+                        <div class="mv-res-neg">
+                            <div style="font-family:'JetBrains Mono', monospace; font-size:0.68rem; font-weight:700; text-transform:uppercase;">Keputusan Klasifikasi SVM</div>
+                            <div style="font-size:1.4rem; font-weight:800; margin:4px 0;">Sentimen NEGATIF (Tingkat Keyakinan: {persentase_yakin}%)</div>
+                            <div style="font-size:0.82rem;">Ulasan terklasifikasi mengandung keluhan kendala teknis atau ketidakpuasan terhadap layanan.</div>
                         </div>
                     """, unsafe_allow_html=True)
 
-                st.progress(int(min(max(persentase_yakin, 1), 100)), text=f"Confidence Score: {persentase_yakin}% | Hyperplane Margin: {jarak_margin:.3f}")
+                st.progress(int(min(max(persentase_yakin, 1), 100)), text=f"Confidence Score: {persentase_yakin}% | Jarak Margin Hyperplane: {jarak_margin:.3f}")
 
                 st.markdown(f"""
-                    <div style="background:#FFFFFF; border:1px solid #E2E8F0; border-radius:10px; padding:14px 16px; margin-top:10px; font-size:0.83rem;">
-                        <div style="font-weight:700; color:#0F172A; margin-bottom:4px;">Teks Setelah Dibersihkan (Sastrawi Stemmer):</div>
-                        <div style="font-family:'JetBrains Mono', monospace; color:#0055B8; background:#F8FAFC; padding:8px 10px; border-radius:6px; border:1px solid #E2E8F0;">
+                    <div style="background:#FFFFFF; border:1px solid #E2E8F0; border-radius:10px; padding:12px 16px; margin-top:10px; font-size:0.82rem;">
+                        <div style="font-weight:700; color:#0F172A; margin-bottom:4px;">Hasil Pembersihan Teks & Stemming Sastrawi:</div>
+                        <div style="font-family:'JetBrains Mono', monospace; color:#1D4ED8; background:#F8FAFC; padding:8px 10px; border-radius:6px; border:1px solid #E2E8F0;">
                             {teks_bersih if teks_bersih else "(Teks habis terfilter stopwords)"}
                         </div>
                     </div>
                 """, unsafe_allow_html=True)
 
 
-# =====================================================================
-# MODUL 3: PEMROSESAN MASSAL (MENGGUNAKAN FILTER ASLI ANALISIS_ULASAN_2.PY)
-# =====================================================================
-elif st.session_state.nav_aktif == "massal":
-
+def render_pemrosesan_massal():
     st.markdown("""
-        <div class="mv-eyebrow">BATCH DATASET PROCESSING</div>
-        <div class="mv-sec-title">Pemrosesan Massal Dataset Ulasan JAKI</div>
-        <div class="mv-sec-sub">Unggah file CSV atau Excel hasil scraping ulasan aplikasi JAKI untuk dianalisis secara massal dan divisualisasikan ke dalam dashboard.</div>
+        <div class="mv-sec-header">
+            <div>
+                <div class="mv-eyebrow">PEMROSESAN DATA SKALA BESAR</div>
+                <h2 class="mv-h2">Klasifikasi Massal Dataset Ulasan JAKI (CSV / Excel)</h2>
+            </div>
+            <div class="mv-sec-note">
+                Unggah file dataset hasil scraping ulasan aplikasi JAKI untuk dianalisis secara massal dan divisualisasikan pada Dashboard.
+            </div>
+        </div>
     """, unsafe_allow_html=True)
 
-    col_up_left, col_up_right = st.columns([7, 5], gap="medium")
+    c_left, c_right = st.columns([7, 5], gap="medium")
 
-    with col_up_right:
+    with c_right:
         st.markdown("""
             <div class="mv-card">
                 <div>
-                    <div class="mv-card-tag">SPESIFIKASI FILTER DATASET</div>
-                    <div class="mv-card-title">Ketentuan Validasi Konteks JAKI</div>
-                    <div class="mv-card-body">
-                        Sistem ini menerapkan <strong>Validasi Konteks Berlapis (Keyword Heuristics & TF-IDF Overlap)</strong>:
+                    <div class="mv-step-tag">MEKANISME VALIDASI DATASET</div>
+                    <div class="mv-card-h3">Validasi Konteks Berlapis & TF-IDF Overlap</div>
+                    <div class="mv-card-p">
+                        Sistem memverifikasi kesesuaian domain dataset menggunakan pembobotan kata kunci:
                         <ul style="margin-top:8px; padding-left:18px; line-height:1.6;">
-                            <li>Mendukung kolom bernama <code>Ulasan</code>, <code>Review</code>, <code>Komentar</code>, atau <code>Text</code>.</li>
-                            <li>Menghitung perbandingan skor kata kunci utama JAKI (<em>jaki, jaklapor, jakwifi, pemprov dki, kelurahan</em>) terhadap kata kunci domain lain.</li>
-                            <li>Dataset resmi JAKI tetap diterima meskipun ada sedikit kata umum, namun dataset murni e-commerce/ojol (Shopee, Tokopedia, Gojek) akan ditolak.</li>
+                            <li>Mendeteksi kolom teks ulasan (<code>Ulasan</code>, <code>Review</code>, <code>Komentar</code>, atau <code>Text</code>).</li>
+                            <li>Menghitung bobot kata kunci ekosistem JAKI (<em>jaki, jaklapor, jakwifi, pemprov dki, kelurahan</em>) dibanding kata kunci e-commerce/ride-hailing.</li>
+                            <li>Memeriksa kecocokan kosakata dengan matriks <code>tfidf_jaki.pkl</code>.</li>
                         </ul>
                     </div>
                 </div>
-                <div class="mv-card-meta"><span>Metode Validasi</span><span>Heuristic Scoring + TF-IDF</span></div>
+                <div class="mv-card-foot"><span>Proteksi Konteks</span><span>Keyword Heuristics</span></div>
             </div>
         """, unsafe_allow_html=True)
 
-    with col_up_left:
+    with c_left:
         st.markdown("""
-            <div class="mv-studio-box">
-                <div class="mv-studio-head">
-                    <span class="mv-num-circle">UNGGAH FILE DATASET (.CSV / .XLSX)</span>
-                    <span style="font-family:'JetBrains Mono', monospace; font-size:0.7rem; color:#64748B;">Drag & Drop</span>
+            <div class="mv-studio-card">
+                <div class="mv-studio-top">
+                    <span class="mv-step-num">UNGGAH FILE DATASET (.CSV / .XLSX)</span>
+                    <span style="font-family:'JetBrains Mono', monospace; font-size:0.68rem; color:#64748B;">Batch Input</span>
                 </div>
             </div>
         """, unsafe_allow_html=True)
 
-        uploaded_file = st.file_uploader("Pilih file CSV atau Excel hasil scraping:", type=['csv', 'xlsx'])
+        uploaded_file = st.file_uploader("Unggah File Dataset Ulasan JAKI (Drag and Drop)", type=['csv', 'xlsx'])
 
         if uploaded_file is None:
             st.session_state.df_hasil = None
         else:
             try:
-                with st.spinner("Memeriksa struktur kolom dan memvalidasi konteks dataset JAKI..."):
+                with st.spinner("Memvalidasi struktur kolom dan kesesuaian konteks dataset JAKI..."):
                     if uploaded_file.name.endswith('.csv'):
                         df = pd.read_csv(uploaded_file)
                     else:
                         df = pd.read_excel(uploaded_file)
 
-                    # 1. FLEKSIBILITAS NAMA KOLOM (DARI KODE ASLI ANALISIS_ULASAN_2.PY ANDA)
+                    # 1. FLEKSIBILITAS NAMA KOLOM (SESUAI ANALISIS_ULASAN_2.PY)
                     kandidat_kolom = ['ulasan', 'review', 'reviews', 'komentar', 'comment', 'text', 'content']
                     kolom_terpilih = None
 
@@ -964,13 +920,11 @@ elif st.session_state.nav_aktif == "massal":
                     st.error("❌ Akses Ditolak: Kolom ulasan tidak ditemukan. Harap gunakan kolom bernama 'Ulasan', 'Review', 'Komentar', atau 'Text'.")
                     st.session_state.df_hasil = None
                 else:
-                    # Samakan nama kolom menjadi 'Ulasan' untuk pemrosesan internal
                     df = df.rename(columns={kolom_terpilih: 'Ulasan'})
 
-                    # 2. VALIDASI KONTEKS BERLAPIS (PERSIS DARI ANALISIS_ULASAN_2.PY ANDA)
+                    # 2. VALIDASI KONTEKS BERLAPIS (KEYWORD HEURISTICS & TF-IDF OVERLAP)
                     teks_gabungan = " ".join(df['Ulasan'].dropna().astype(str).tolist()).lower()
 
-                    # A. Pembobotan Kata Kunci JAKI
                     kw_utama = ['jaki', 'jakarta kini', 'pemprov dki', 'dki jakarta', 'beritajakarta']
                     kw_fitur = ['jaklapor', 'jakpantau', 'jakwifi', 'jakwarta', 'jakrespon', 'kelurahan', 'kecamatan', 'rt/rw', 'lapor', 'crm', 'posyandu', 'pbb']
 
@@ -978,16 +932,13 @@ elif st.session_state.nav_aktif == "massal":
                     skor_fitur = sum(teks_gabungan.count(w) for w in kw_fitur) * 1
                     total_skor_jaki = skor_utama + skor_fitur
 
-                    # B. Anti-Keywords (Domain Lain)
                     kw_domain_lain = ['driver', 'gojek', 'gofood', 'shopee', 'tokopedia', 'grab', 'pln', 'ongkir', 'pesanan', 'm-banking', 'seller']
                     skor_domain_lain = sum(teks_gabungan.count(w) for w in kw_domain_lain)
 
-                    # C. Check Kesesuaian Kosa Kata TF-IDF
                     sampel_teks = df['Ulasan'].dropna().astype(str).head(100)
                     sampel_vektor = tfidf_vect.transform(sampel_teks)
                     jumlah_fitur_match = (sampel_vektor.sum(axis=0) > 0).sum()
 
-                    # EVALUASI GERBANG KEAMANAN
                     if skor_domain_lain > total_skor_jaki and skor_domain_lain > 5:
                         st.error("❌ Akses Ditolak (Keamanan Konteks): Terdeteksi ulasan dari aplikasi e-commerce/ride-hailing, bukan konteks aplikasi JAKI.")
                         st.session_state.df_hasil = None
@@ -995,66 +946,180 @@ elif st.session_state.nav_aktif == "massal":
                         st.error("❌ Akses Ditolak (Keamanan Konteks): File yang diunggah tidak mengandung kosa kata/entitas terkait pelayanan aplikasi JAKI.")
                         st.session_state.df_hasil = None
                     else:
-                        st.success(f"✅ File tervalidasi sebagai dataset JAKI! Siap memproses data dari kolom '{kolom_terpilih}' ({df.shape[0]:,} baris).")
+                        st.success(f"✅ File tervalidasi! Siap memproses data dari kolom '{kolom_terpilih}' ({df.shape[0]:,} baris).")
 
                         if st.button("Mulai Pembersihan & Analisis Massal", type="primary", use_container_width=True):
-                            with st.spinner("Menjalankan Sastrawi Stemming & Klasifikasi SVM pada seluruh baris data..."):
-                                with st.status("Memproses Data Ulasan JAKI...", expanded=True) as status:
-                                    st.write("Tahap 1: Membersihkan teks dan menjalankan stemming Sastrawi...")
+                            with st.spinner("Menjalankan Sastrawi Stemming dan klasifikasi SVM pada seluruh dataset..."):
+                                with st.status("Memproses Data...", expanded=True) as status:
                                     df_bersih = df.dropna(subset=['Ulasan']).copy()
                                     df_bersih['Ulasan_Bersih'] = df_bersih['Ulasan'].apply(pembersihan_teks)
                                     df_bersih = df_bersih[df_bersih['Ulasan_Bersih'].str.strip() != '']
 
-                                    st.write("Tahap 2: Transformasi matriks TF-IDF dan prediksi kelas SVM...")
                                     vektor_massal = tfidf_vect.transform(df_bersih['Ulasan_Bersih'])
                                     df_bersih['Label_Sentimen'] = svm_model.predict(vektor_massal)
 
                                     st.session_state.df_hasil = df_bersih
                                     status.update(label="Pemrosesan Selesai!", state="complete", expanded=False)
 
-                            st.success("Berhasil! Silakan unduh hasil analisis di bawah atau buka modul **Dashboard Visualisasi**.")
+                            st.success("🎉 Pemrosesan selesai! Unduh file hasil di bawah atau buka **Dashboard Visualisasi**.")
 
             except Exception as e:
                 st.error(f"Terjadi kesalahan teknis: {e}")
                 st.session_state.df_hasil = None
 
     if st.session_state.df_hasil is not None:
-        st.write("---")
         df_out = st.session_state.df_hasil
-        act1, act2 = st.columns(2)
-        with act1:
+        with st.expander("📄 Klik untuk melihat 10 sampel data yang telah diproses", expanded=True):
+            st.dataframe(df_out.head(10), use_container_width=True)
+
+        d1, d2 = st.columns(2)
+        with d1:
             csv_output = df_out.to_csv(index=False).encode('utf-8')
             st.download_button(
-                "Unduh Hasil Analisis (Hasil_JAKI.csv)",
+                "📥 Unduh Hasil Analisis (Hasil_JAKI.csv)",
                 data=csv_output,
                 file_name='Hasil_JAKI.csv',
                 mime='text/csv',
                 use_container_width=True
             )
-        with act2:
-            if st.button("Buka Dashboard Visualisasi →", type="primary", use_container_width=True):
-                set_nav("visualisasi")
+        with d2:
+            if st.button("📊 Buka Dashboard Visualisasi →", type="primary", use_container_width=True):
+                navigasi_ke("visualisasi")
                 st.rerun()
 
-        with st.expander("Klik untuk melihat 10 sampel data pertama yang telah diproses", expanded=True):
-            st.dataframe(df_out.head(10), use_container_width=True)
 
+def render_pipeline_dan_spesifikasi():
+    st.markdown("""
+        <div class="mv-sec-header">
+            <div>
+                <div class="mv-eyebrow">ARSITEKTUR & METODOLOGI</div>
+                <h2 class="mv-h2">Lima Tahap Pipeline Komputasi Analisis Sentimen</h2>
+            </div>
+            <div class="mv-sec-note">
+                Alur pemrosesan sekuensial dari validasi domain teks hingga pemisahan kelas menggunakan Hyperplane Support Vector Machine.
+            </div>
+        </div>
+    """, unsafe_allow_html=True)
 
-# =====================================================================
-# MODUL 4: DASHBOARD VISUALISASI EKSKLUSIF
-# =====================================================================
-elif st.session_state.nav_aktif == "visualisasi":
+    p1, p2, p3, p4, p5 = st.columns(5)
+    with p1:
+        st.markdown("""
+            <div class="mv-card">
+                <div>
+                    <div class="mv-step-tag">01 / VALIDASI KONTEKS</div>
+                    <div class="mv-card-h3">Input & Domain Guard</div>
+                    <div class="mv-card-p">Pemeriksaan struktur atribut ulasan dan pembobotan kata kunci untuk memastikan kesesuaian topik aplikasi JAKI.</div>
+                </div>
+                <div class="mv-card-foot"><span>Heuristic Check</span><span>Filter Data</span></div>
+            </div>
+        """, unsafe_allow_html=True)
+    with p2:
+        st.markdown("""
+            <div class="mv-card">
+                <div>
+                    <div class="mv-step-tag">02 / NORMALISASI TEKS</div>
+                    <div class="mv-card-h3">Case Folding & Cleaning</div>
+                    <div class="mv-card-p">Penyeragaman huruf kecil, pembersihan karakter non-alfabet/URL, dan konversi kata tidak baku ke kata standar.</div>
+                </div>
+                <div class="mv-card-foot"><span>Regex Filter</span><span>Kamus Leksikal</span></div>
+            </div>
+        """, unsafe_allow_html=True)
+    with p3:
+        st.markdown("""
+            <div class="mv-card">
+                <div>
+                    <div class="mv-step-tag">03 / PREPROCESSING</div>
+                    <div class="mv-card-h3">Stopwords & Sastrawi</div>
+                    <div class="mv-card-p">Eliminasi kata umum tanpa menghapus negasi penting (<em>tidak, bukan, belum, jangan</em>) serta reduksi imbuhan ke kata dasar.</div>
+                </div>
+                <div class="mv-card-foot"><span>NLTK Corpus</span><span>Sastrawi Stemmer</span></div>
+            </div>
+        """, unsafe_allow_html=True)
+    with p4:
+        st.markdown("""
+            <div class="mv-card">
+                <div>
+                    <div class="mv-step-tag">04 / EKSTRAKSI FITUR</div>
+                    <div class="mv-card-h3">Pembobotan TF-IDF</div>
+                    <div class="mv-card-p">Transformasi token kata dasar menjadi representasi vektor numerik berdasarkan frekuensi kata dalam dokumen.</div>
+                </div>
+                <div class="mv-card-foot"><span>Matriks Vektor</span><span>tfidf_jaki.pkl</span></div>
+            </div>
+        """, unsafe_allow_html=True)
+    with p5:
+        st.markdown("""
+            <div class="mv-card">
+                <div>
+                    <div class="mv-step-tag">05 / KLASIFIKASI</div>
+                    <div class="mv-card-h3">Hyperplane SVM</div>
+                    <div class="mv-card-p">Penentuan kelas sentimen Positif atau Negatif berdasarkan posisi vektor terhadap bidang pemisah optimal (<em>margin</em>).</div>
+                </div>
+                <div class="mv-card-foot"><span>Linear Kernel</span><span>model_svm_jaki.pkl</span></div>
+            </div>
+        """, unsafe_allow_html=True)
+
+    st.write("")
+    st.write("---")
 
     st.markdown("""
-        <div class="mv-eyebrow">VISUAL ANALYTICS DASHBOARD</div>
-        <div class="mv-sec-title">Dashboard Visualisasi Sentimen Aplikasi JAKI</div>
-        <div class="mv-sec-sub">Distribusi proporsi sentimen, sebaran interaksi ulasan, peta panas jam masuk laporan, serta kata kunci dominan.</div>
+        <div class="mv-sec-header">
+            <div>
+                <div class="mv-eyebrow">SPESIFIKASI TEKNIS</div>
+                <h2 class="mv-h2">Keunggulan Komputasi & Kapabilitas Sistem</h2>
+            </div>
+        </div>
+    """, unsafe_allow_html=True)
+
+    sp1, sp2, sp3 = st.columns(3)
+    with sp1:
+        st.markdown("""
+            <div class="mv-card">
+                <div>
+                    <div class="mv-step-tag">01 / PRESERVASI NEGASI</div>
+                    <div class="mv-card-h3">Akurasi Konteks Bahasa Indonesia</div>
+                    <div class="mv-card-p">Mempertahankan kata negasi utama agar frasa seperti <em>"tidak lambat"</em> atau <em>"belum diperbaiki"</em> tidak kehilangan orientasi polaritas sentimennya.</div>
+                </div>
+                <div class="mv-card-foot"><span>Konteks Semantik</span><span style="color:#1D4ED8; font-weight:700;">Presisi Tinggi</span></div>
+            </div>
+        """, unsafe_allow_html=True)
+    with sp2:
+        st.markdown("""
+            <div class="mv-card">
+                <div>
+                    <div class="mv-step-tag">02 / DOMAIN HEURISTICS</div>
+                    <div class="mv-card-h3">Seleksi Otomatis Dataset JAKI</div>
+                    <div class="mv-card-p">Mengombinasikan skor kata kunci layanan Pemprov DKI dan irisan kosakata TF-IDF untuk menolak dataset di luar topik penelitian.</div>
+                </div>
+                <div class="mv-card-foot"><span>Keamanan Data</span><span style="color:#1D4ED8; font-weight:700;">Multi-Layer Filter</span></div>
+            </div>
+        """, unsafe_allow_html=True)
+    with sp3:
+        st.markdown("""
+            <div class="mv-card">
+                <div>
+                    <div class="mv-step-tag">03 / INFERENSI CEPAT</div>
+                    <div class="mv-card-h3">Klasifikasi & Visualisasi Terpadu</div>
+                    <div class="mv-card-p">Mendukung pengujian kalimat tunggal secara <em>real-time</em> maupun pemrosesan ribuan baris CSV lengkap dengan Peta Panas dan Word Cloud.</div>
+                </div>
+                <div class="mv-card-foot"><span>Analitik Visual</span><span style="color:#1D4ED8; font-weight:700;">Plotly & WordCloud</span></div>
+            </div>
+        """, unsafe_allow_html=True)
+
+
+def render_dashboard_visualisasi():
+    st.markdown("""
+        <div class="mv-sec-header">
+            <div>
+                <div class="mv-eyebrow">DASHBOARD ANALITIK VISUAL</div>
+                <h2 class="mv-h2">Visualisasi Distribusi Sentimen & Peta Panas Ulasan</h2>
+            </div>
+        </div>
     """, unsafe_allow_html=True)
 
     if st.session_state.df_hasil is None:
-        st.warning("Silakan unggah dan proses data di modul **Pemrosesan Massal (CSV)** terlebih dahulu untuk mengaktifkan Dashboard.")
-        if st.button("Ke Pemrosesan Massal (CSV) →", type="primary"):
-            set_nav("massal")
+        st.warning("⚠️ Silakan unggah dan proses dataset terlebih dahulu pada bagian **Pemrosesan Massal CSV** untuk mengaktifkan Dashboard Visualisasi.")
+        if st.button("Ke Pemrosesan Massal CSV →", type="primary"):
+            navigasi_ke("massal")
             st.rerun()
     else:
         with st.spinner("Memuat visualisasi grafik dan Word Cloud..."):
@@ -1082,7 +1147,6 @@ elif st.session_state.nav_aktif == "visualisasi":
 
             color_map = {'Positif': '#4E79A7', 'Negatif': '#E15759'}
 
-            # BARIS 1: 3 CHART BERSAMPINGAN
             col1, col2, col3 = st.columns(3)
             sentimen_counts = df_viz['Label_Sentimen'].value_counts().reset_index()
             sentimen_counts.columns = ['Sentimen', 'Jumlah']
@@ -1124,11 +1188,10 @@ elif st.session_state.nav_aktif == "visualisasi":
                     fig_scatter.update_layout(margin=dict(t=40, b=20, l=10, r=10), showlegend=True)
                     st.plotly_chart(fig_scatter, use_container_width=True)
                 else:
-                    st.info("Kolom 'Jumlah_Like' tidak ditemukan di dalam data.")
+                    st.info("💡 Kolom 'Jumlah_Like' tidak ada di data.")
 
             st.write("---")
 
-            # BARIS 2: HEATMAP & 2 WORD CLOUD
             col4, col5, col6 = st.columns(3)
 
             with col4:
@@ -1160,7 +1223,7 @@ elif st.session_state.nav_aktif == "visualisasi":
                     fig_hm.update_layout(margin=dict(t=30, b=20, l=10, r=10), coloraxis_showscale=False)
                     st.plotly_chart(fig_hm, use_container_width=True)
                 else:
-                    st.info("Kolom 'Tanggal_dan_Jam' tidak ditemukan untuk membuat Heatmap.")
+                    st.info("💡 Kolom 'Tanggal_dan_Jam' tidak ditemukan untuk membuat Heatmap.")
 
             def buat_wordcloud(teks_gabungan, title, colormap):
                 if len(teks_gabungan) > 0:
@@ -1189,3 +1252,41 @@ elif st.session_state.nav_aktif == "visualisasi":
                 fig_wc_neg = buat_wordcloud(teks_neg, "Kata Kunci Negatif", "Reds")
                 if fig_wc_neg:
                     st.pyplot(fig_wc_neg)
+
+
+# =====================================================================
+# 6. ROUTING HALAMAN BERDASARKAN NAVBAR ATAS
+# =====================================================================
+if st.session_state.halaman_aktif == "landing":
+    # Tampilan Landing Page Utuh dari Atas ke Bawah seperti MusaVision
+    render_hero_section()
+    st.write("")
+    st.write("---")
+    render_studio_tunggal()
+    st.write("")
+    st.write("---")
+    render_pipeline_dan_spesifikasi()
+
+elif st.session_state.halaman_aktif == "tunggal":
+    render_studio_tunggal()
+
+elif st.session_state.halaman_aktif == "massal":
+    render_pemrosesan_massal()
+
+elif st.session_state.halaman_aktif == "visualisasi":
+    render_dashboard_visualisasi()
+
+elif st.session_state.halaman_aktif == "pipeline":
+    render_pipeline_dan_spesifikasi()
+
+# FOOTER ALA MUSAVISION
+st.markdown("""
+    <div class="mv-footer">
+        <div>
+            <strong style="color:#0F172A;">JAKIVision</strong> &nbsp;&bull;&nbsp; Analisis Sentimen Ulasan Aplikasi JAKI Berbasis Support Vector Machine (SVM)
+        </div>
+        <div style="font-family:'JetBrains Mono', monospace; font-size:0.7rem;">
+            Sastrawi &bull; TF-IDF &bull; Linear SVM &bull; Artha Nugraha
+        </div>
+    </div>
+""", unsafe_allow_html=True)
